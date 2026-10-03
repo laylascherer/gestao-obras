@@ -505,7 +505,7 @@
         funcao === 'enviarParteArquivo' || funcao === 'baixarArquivo';
       // Quem leva arquivo pode demorar mais no servidor (salvar no Drive)
       const comArquivo = args.some(a => a && (a.base64 || a.envio));
-      return pedirAoServidor(funcao, args, leitura ? 3 : 1, comArquivo ? 150000 : 45000).catch(falhou);
+      return pedirAoServidor(funcao, args, leitura ? 3 : 1, comArquivo ? 330000 : 45000).catch(falhou);
     }
     return new Promise((resolve, reject) => {
       google.script.run
@@ -1545,7 +1545,7 @@
   }
 
   const ICONE_CLIPE = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.4 11.1l-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"/></svg>`;
-  const TAMANHO_MAXIMO_MB = 10;
+  const TAMANHO_MAXIMO_MB = 50; // limite do Google para um arquivo
 
   // O Google falha com pedidos muito grandes: arquivos acima disso vão em pedaços
   const TAMANHO_PEDACO = 1500000; // caracteres de base64 (múltiplo de 4)
@@ -1606,7 +1606,7 @@
    * PDFs escaneados: cada página vira uma imagem mais leve. PDFs com texto (gerados no computador),
    * plantas em folha grande e PDFs com assinatura digital ficam como estão, para não perder nada.
    * Se a versão reduzida não ficar menor, vai o arquivo original. */
-  const TAMANHO_ORIGINAL_MB = 40;
+  const TAMANHO_ORIGINAL_MB = 100;
   const LADO_MAXIMO_FOTO = 1600;
 
   async function reduzirArquivo(arquivo) {
