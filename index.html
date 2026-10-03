@@ -413,7 +413,17 @@
             ? 'O servidor demorou demais para responder. Tente de novo em alguns segundos.'
             : 'Sem conexão com o servidor. Verifique a internet e tente de novo.');
         })
-        .then(r => r.json())
+        .then(r => r.text())
+        .then(texto => {
+          try { return JSON.parse(texto); } catch (e) { /* o Google devolveu uma página de erro */ }
+          const titulo = (texto.match(/<title>([^<]*)<\/title>/i) || [])[1] || '';
+          if (/autoriza|authoriz|permiss/i.test(texto)) {
+            throw new Error('O Google bloqueou esta ação porque falta autorizar as permissões do sistema. ' +
+              'A administradora precisa abrir a planilha no computador e clicar em Gestão de Obras → Autorizar permissões.');
+          }
+          throw new Error('O servidor do Google respondeu com um erro' + (titulo ? ' (' + titulo.trim() + ')' : '') +
+            '. Tente de novo em alguns segundos.');
+        })
         .finally(() => clearTimeout(limite))
         .then(d => { if (!d.ok) throw new Error(d.erro); return d.r; })
         .catch(falhou);
