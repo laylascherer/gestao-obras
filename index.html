@@ -3264,7 +3264,6 @@
       const rascunho = travado ? null : lerRascunhoDiario();
       const d = rascunho ? { ...salvo, ...rascunho } : salvo;
       const fotos = salvo.Fotos ? String(salvo.Fotos).split('\n').length : 0;
-      const livres = 8 - fotos;
       const dis = travado ? 'disabled' : '';
       return `<div class="cartao secao destaque-acao">
         <h2>Diário de ${diaSemana(estado.fisDia)}, ${dataBR(estado.fisDia)}</h2>
@@ -3286,13 +3285,13 @@
           <div class="campo largo"><label for="di-ocorrencias">Ocorrências</label><textarea id="di-ocorrencias" ${dis}
             placeholder="Ex.: faltou água à tarde; visita do cliente">${esc(d.Ocorrencias)}</textarea></div>
           ${fotos ? `<div class="campo largo"><label>Fotos já enviadas (${fotos})</label><div>${linksFotos(salvo.Fotos)}</div></div>` : ''}
-          ${livres > 0 ? `<div class="campo largo"><label for="di-fotos">Fotos (até ${livres})</label>
+          <div class="campo largo"><label for="di-fotos">${fotos ? 'Mais fotos' : 'Fotos'}</label>
             <input id="di-fotos" type="file" accept="image/*" multiple>
             <div class="suave pequeno" style="margin-top:4px">Sem internet na obra? Tire as fotos com a câmera do celular normalmente.
-              Quando tiver sinal, abra este dia no calendário e escolha as fotos da galeria.</div></div>` : ''}
+              Quando tiver sinal, abra este dia no calendário e escolha as fotos da galeria.</div></div>
         </div>
         <div class="acoes">${fechar}
-          ${travado ? (livres > 0 && salvo.ID_Diario ? `<button class="botao primario" onclick="adicionarFotosTela()">Anexar fotos</button>` : '')
+          ${travado ? (salvo.ID_Diario ? `<button class="botao primario" onclick="adicionarFotosTela()">Anexar fotos</button>` : '')
             : `<button class="botao primario" onclick="salvarDiarioTela()">Salvar o dia</button>`}</div>
       </div>`;
     }
@@ -3474,11 +3473,16 @@
     try { localStorage.removeItem(chaveRascunhoDiario()); } catch (e) { /* sem armazenamento */ }
   }
 
-  async function lerFotosDoDiario() {
+  // Uma foto por vez (muitas fotos num envio só passariam do limite do Google)
+  async function enviarFotosDoDiario(data) {
     const campo = document.getElementById('di-fotos');
-    const fotos = [];
-    for (const a of campo ? Array.from(campo.files) : []) fotos.push(await lerArquivo(a));
-    return fotos;
+    const arquivos = campo ? Array.from(campo.files) : [];
+    for (let i = 0; i < arquivos.length; i++) {
+      const foto = await lerArquivo(arquivos[i]);
+      mostrarAvisoFixo(`Enviando foto ${i + 1} de ${arquivos.length}…`);
+      await chamar('adicionarFotosDiario', estado.fis.obra.ID_Obra, data, [foto], auth());
+    }
+    return arquivos.length;
   }
 
   function erroDeInternet(erro) {
@@ -3489,9 +3493,9 @@
     guardarRascunhoDiario();
     travarBotoes(true);
     try {
-      const fotos = await lerFotosDoDiario();
-      await chamar('salvarDiario', estado.fis.obra.ID_Obra, dadosDoDiario(), fotos, auth());
+      await chamar('salvarDiario', estado.fis.obra.ID_Obra, dadosDoDiario(), [], auth());
       apagarRascunhoDiario();
+      await enviarFotosDoDiario(estado.fisDia);
       await recarregarFiscal();
       mostrarMensagem('Diário salvo! Foi para validação do Coordenador.');
     } catch (erro) {
@@ -3504,11 +3508,10 @@
   async function adicionarFotosTela() {
     travarBotoes(true);
     try {
-      const fotos = await lerFotosDoDiario();
-      if (!fotos.length) throw new Error('Escolha as fotos.');
-      await chamar('adicionarFotosDiario', estado.fis.obra.ID_Obra, estado.fisDia, fotos, auth());
+      if (!document.getElementById('di-fotos')?.files.length) throw new Error('Escolha as fotos.');
+      const n = await enviarFotosDoDiario(estado.fisDia);
       await recarregarFiscal();
-      mostrarMensagem('Fotos anexadas ao dia ' + dataBR(estado.fisDia) + '.');
+      mostrarMensagem(n + ' foto(s) anexada(s) ao dia ' + dataBR(estado.fisDia) + '.');
     } catch (erro) { mostrarErro(erro); travarBotoes(false); }
   }
 
