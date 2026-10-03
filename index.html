@@ -498,7 +498,7 @@
       // Leituras (abrir telas, listar) tentam de novo sozinhas se o Google falhar por um instante.
       // Gravações não repetem, para não salvar nada em dobro.
       const leitura = funcao === 'iniciarSessao' || funcao.startsWith('abrir') || funcao.startsWith('listar') ||
-        funcao === 'enviarParteArquivo';
+        funcao === 'enviarParteArquivo' || funcao === 'baixarArquivo';
       // Quem leva arquivo pode demorar mais no servidor (salvar no Drive)
       const comArquivo = args.some(a => a && (a.base64 || a.envio));
       return pedirAoServidor(funcao, args, leitura ? 3 : 1, comArquivo ? 150000 : 45000).catch(falhou);
@@ -1356,7 +1356,7 @@
         <span>${esc(d.TipoDocumento)}</span>
         ${d.Obrigatorio ? '<span class="obrig">OBRIGATÓRIO</span>' : ''}
         <span class="anexo">
-          ${d.Arquivo ? `<a class="ver-arquivo" href="${esc(d.Arquivo)}" target="_blank" rel="noopener">${ICONE_CLIPE} Ver arquivo</a>` : ''}
+          ${d.Arquivo ? linkArquivo(d.Arquivo, 'Ver arquivo') : ''}
           ${editavel ? `
             <input type="file" id="arq-${d.ID_Documento}" accept=".pdf,image/*" hidden
                    onchange="enviarArquivo('${d.ID_Documento}', this)">
@@ -1477,8 +1477,12 @@
   // Lê um arquivo escolhido no computador/celular e prepara para enviar.
   // Se for grande, já manda os pedaços para o servidor e devolve só a "senha" do envio.
   async function lerArquivo(arquivo) {
+    if (arquivo.size > TAMANHO_ORIGINAL_MB * 1024 * 1024) {
+      throw new Error(`O arquivo passa de ${TAMANHO_ORIGINAL_MB} MB. Envie um arquivo menor.`);
+    }
+    arquivo = await reduzirArquivo(arquivo);
     if (arquivo.size > TAMANHO_MAXIMO_MB * 1024 * 1024) {
-      throw new Error(`O arquivo passa de ${TAMANHO_MAXIMO_MB} MB. Envie um arquivo menor.`);
+      throw new Error(`Mesmo reduzido, o arquivo passa de ${TAMANHO_MAXIMO_MB} MB. Envie um arquivo menor.`);
     }
     const base64 = await new Promise((resolve, reject) => {
       const leitor = new FileReader();
@@ -1506,6 +1510,10 @@
 
   // Aviso fixo com a porcentagem do envio (some com a próxima mensagem)
   function mostrarProgressoEnvio(pct) {
+    mostrarAvisoFixo(pct < 100 ? `Enviando arquivo… ${pct}%` : 'Salvando no Google Drive…');
+  }
+
+  function mostrarAvisoFixo(texto) {
     let aviso = document.getElementById('progresso-envio');
     if (!aviso) {
       document.querySelectorAll('.mensagem').forEach(m => m.remove());
@@ -1514,16 +1522,143 @@
       aviso.className = 'mensagem';
       document.body.appendChild(aviso);
     }
-    aviso.textContent = pct < 100 ? `Enviando arquivo… ${pct}%` : 'Salvando no Google Drive…';
+    aviso.textContent = texto;
+  }
+
+  /* ---------- Redução de fotos e PDFs antes de enviar ----------
+   * Fotos: no máximo 1600 px no lado maior, em JPEG (uma foto de celular de 3–5 MB vira uns 300 KB).
+   * PDFs escaneados: cada página vira uma imagem mais leve. PDFs com texto (gerados no computador),
+   * plantas em folha grande e PDFs com assinatura digital ficam como estão, para não perder nada.
+   * Se a versão reduzida não ficar menor, vai o arquivo original. */
+  const TAMANHO_ORIGINAL_MB = 40;
+  const LADO_MAXIMO_FOTO = 1600;
+
+  async function reduzirArquivo(arquivo) {
+    try {
+      if (/^image\/(jpeg|png|webp)$/i.test(arquivo.type) && arquivo.size > 400 * 1024) return await reduzirImagem(arquivo);
+      if (arquivo.type === 'application/pdf' && arquivo.size > 1.5 * 1024 * 1024) return await reduzirPdf(arquivo);
+    } catch (erro) { console.warn('Não foi possível reduzir o arquivo; vai o original.', erro); }
+    return arquivo;
+  }
+
+  async function reduzirImagem(arquivo) {
+    mostrarAvisoFixo('Reduzindo a foto…');
+    const endereco = URL.createObjectURL(arquivo);
+    try {
+      const img = new Image();
+      img.src = endereco;
+      await img.decode(); // o navegador já aplica a rotação da câmera
+      const escala = Math.min(1, LADO_MAXIMO_FOTO / Math.max(img.naturalWidth, img.naturalHeight));
+      const canvas = document.createElement('canvas');
+      canvas.width = Math.round(img.naturalWidth * escala);
+      canvas.height = Math.round(img.naturalHeight * escala);
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#fff'; // PNG transparente fica com fundo branco
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+      const blob = await new Promise(r => canvas.toBlob(r, 'image/jpeg', 0.78));
+      if (!blob || blob.size >= arquivo.size) return arquivo;
+      return new File([blob], arquivo.name.replace(/\.\w+$/, '') + '.jpg', { type: 'image/jpeg' });
+    } finally { URL.revokeObjectURL(endereco); }
+  }
+
+  async function reduzirPdf(arquivo) {
+    const bytes = new Uint8Array(await arquivo.arrayBuffer());
+    // Assinatura digital (gov.br, certificado, Clicksign…): mexer no arquivo invalidaria a assinatura
+    const amostra = new TextDecoder('latin1').decode(bytes);
+    if (/\/ByteRange|\/Type\s*\/Sig\b/.test(amostra)) return arquivo;
+
+    mostrarAvisoFixo('Reduzindo o PDF…');
+    await carregarScript('https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js');
+    await carregarScript('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+    const pdf = await pdfjsLib.getDocument({ data: bytes }).promise;
+    if (pdf.numPages > 60) return arquivo;
+
+    // Só PDFs escaneados (páginas sem texto) e em tamanho de folha comum (até A3)
+    let comTexto = 0;
+    for (let i = 1; i <= pdf.numPages; i++) {
+      const pagina = await pdf.getPage(i);
+      const v = pagina.getViewport({ scale: 1 });
+      if (Math.max(v.width, v.height) > 1250) return arquivo;
+      const texto = await pagina.getTextContent();
+      if (texto.items.map(t => t.str).join('').trim().length > 80) comTexto++;
+    }
+    if (comTexto > pdf.numPages / 2) return arquivo;
+
+    let doc;
+    const canvas = document.createElement('canvas');
+    for (let i = 1; i <= pdf.numPages; i++) {
+      mostrarAvisoFixo(`Reduzindo o PDF… página ${i} de ${pdf.numPages}`);
+      const pagina = await pdf.getPage(i);
+      const base = pagina.getViewport({ scale: 1 });
+      const vp = pagina.getViewport({ scale: Math.min(2.2, LADO_MAXIMO_FOTO / Math.max(base.width, base.height)) });
+      canvas.width = Math.round(vp.width); canvas.height = Math.round(vp.height);
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+      await pagina.render({ canvasContext: ctx, viewport: vp }).promise;
+      const jpg = canvas.toDataURL('image/jpeg', 0.72);
+      const formato = [base.width, base.height];
+      const orientacao = base.width > base.height ? 'l' : 'p';
+      if (!doc) doc = new jspdf.jsPDF({ orientation: orientacao, unit: 'pt', format: formato });
+      else doc.addPage(formato, orientacao);
+      doc.addImage(jpg, 'JPEG', 0, 0, base.width, base.height);
+    }
+    const blob = doc.output('blob');
+    return blob.size < arquivo.size * 0.8 ? new File([blob], arquivo.name, { type: 'application/pdf' }) : arquivo;
+  }
+
+  const scriptsCarregados = {};
+  function carregarScript(src) {
+    if (!scriptsCarregados[src]) {
+      scriptsCarregados[src] = new Promise((resolve, reject) => {
+        const tag = document.createElement('script');
+        tag.src = src;
+        tag.onload = resolve;
+        tag.onerror = () => { delete scriptsCarregados[src]; reject(new Error('Sem internet para carregar ' + src)); };
+        document.head.appendChild(tag);
+      });
+    }
+    return scriptsCarregados[src];
+  }
+
+  /* ---------- Abrir anexos ----------
+   * Os arquivos ficam privados no Drive. O site busca o arquivo no servidor (quem entrou no
+   * site pode ver) e abre numa nova aba, sem pedir conta Google nem autorização. */
+  async function abrirAnexo(evento, url) {
+    evento.preventDefault();
+    const janela = window.open('', '_blank');
+    if (janela) janela.document.write('<p style="font-family:sans-serif;padding:24px;color:#555">Abrindo o arquivo…</p>');
+    try {
+      const a = await chamar('baixarArquivo', url, auth());
+      const binario = atob(a.base64);
+      const bytes = new Uint8Array(binario.length);
+      for (let i = 0; i < binario.length; i++) bytes[i] = binario.charCodeAt(i);
+      const endereco = URL.createObjectURL(new Blob([bytes], { type: a.tipo }));
+      const daParaVer = /^(application\/pdf|image\/|text\/plain)/.test(a.tipo);
+      if (janela && daParaVer) {
+        janela.location.href = endereco;
+      } else {
+        if (janela) janela.close();
+        const link = document.createElement('a'); // outros tipos (DWG, XML…) são baixados
+        link.href = endereco; link.download = a.nome;
+        document.body.appendChild(link); link.click(); link.remove();
+      }
+      setTimeout(() => URL.revokeObjectURL(endereco), 120000);
+    } catch (erro) {
+      if (janela) janela.close();
+      mostrarErro(erro);
+    }
+    return false;
   }
 
   // Lê o arquivo escolhido, converte para texto (base64) e envia para o Drive
   async function enviarArquivo(idDocumento, campo) {
     const arquivo = campo.files[0];
     if (!arquivo) return;
-    if (arquivo.size > TAMANHO_MAXIMO_MB * 1024 * 1024) {
+    if (arquivo.size > TAMANHO_ORIGINAL_MB * 1024 * 1024) {
       campo.value = '';
-      return mostrarMensagem(`O arquivo passa de ${TAMANHO_MAXIMO_MB} MB. Envie um arquivo menor.`, 'erro');
+      return mostrarMensagem(`O arquivo passa de ${TAMANHO_ORIGINAL_MB} MB. Envie um arquivo menor.`, 'erro');
     }
 
     const linha = document.getElementById('doc-' + idDocumento);
@@ -1587,7 +1722,7 @@
   }
 
   function linkArquivo(url, texto) {
-    return url ? `<a class="ver-arquivo" href="${esc(url)}" target="_blank" rel="noopener">${ICONE_CLIPE} ${texto}</a>` : '';
+    return url ? `<a class="ver-arquivo" href="${esc(url)}" onclick="return abrirAnexo(event, this.href)">${ICONE_CLIPE} ${texto}</a>` : '';
   }
 
   function desenharContrato() {
@@ -2226,7 +2361,7 @@
         </div>
         ${podeEditar ? `<div class="acoes"><button class="botao" onclick="salvarCamposEng(['VisitaData','VisitaObservacoes'])">Salvar visita</button></div>` : ''}
         <h3 class="subtitulo">Fotos (${fotosVisita.length})</h3>
-        <div class="lista-fotos">${fotosVisita.map(f => `<a class="foto-link" href="${esc(f.Arquivo)}" target="_blank" rel="noopener">${ICONE_CLIPE} ${esc(f.Nome)}<span class="suave"> · ${dataBR(f.Data)}</span></a>`).join('') || '<span class="suave pequeno">Nenhuma foto.</span>'}</div>
+        <div class="lista-fotos">${fotosVisita.map(f => `<a class="foto-link" href="${esc(f.Arquivo)}" onclick="return abrirAnexo(event, this.href)">${ICONE_CLIPE} ${esc(f.Nome)}<span class="suave"> · ${dataBR(f.Data)}</span></a>`).join('') || '<span class="suave pequeno">Nenhuma foto.</span>'}</div>
         ${podeEditar ? `<div class="envio-versao"><input type="file" id="fotos-visita" accept="image/*" multiple>
           <button class="botao pequeno primario" onclick="enviarFotosVisita()">Enviar fotos</button></div>` : ''}
       </div>`;
@@ -2910,7 +3045,7 @@
         <div class="campos">
           <div class="campo largo"><label for="cf-div">Divergência (obrigatória se algo não chegou ou veio errado)</label>
             <textarea id="cf-div" placeholder="Ex.: vieram 150 sacos em vez de 180"></textarea></div>
-          <div class="campo"><label for="cf-foto">Foto da entrega</label><input id="cf-foto" type="file" accept="image/*" capture="environment"></div>
+          <div class="campo"><label for="cf-foto">Foto da entrega</label><input id="cf-foto" type="file" accept="image/*"></div>
         </div>
         <div class="acoes"><button class="botao" onclick="estado.expConfirmando=null; desenharExpedicao()">Voltar</button>
           <button class="botao sucesso" onclick="confirmarEntregaTela('${e.ID_Entrega}')">Confirmar recebimento</button></div>
@@ -3123,32 +3258,42 @@
     const f = estado.fis;
 
     if (p === 'diario') {
-      const d = f.diario.find(x => x.Data === estado.fisDia) || {};
-      const travado = d.Situacao === 'Validado';
-      const fotos = d.Fotos ? String(d.Fotos).split('\n').length : 0;
+      const salvo = f.diario.find(x => x.Data === estado.fisDia) || {};
+      const travado = salvo.Situacao === 'Validado';
+      // Texto digitado sem internet fica guardado neste aparelho até ser enviado
+      const rascunho = travado ? null : lerRascunhoDiario();
+      const d = rascunho ? { ...salvo, ...rascunho } : salvo;
+      const fotos = salvo.Fotos ? String(salvo.Fotos).split('\n').length : 0;
+      const livres = 8 - fotos;
+      const dis = travado ? 'disabled' : '';
       return `<div class="cartao secao destaque-acao">
         <h2>Diário de ${diaSemana(estado.fisDia)}, ${dataBR(estado.fisDia)}</h2>
-        ${d.ID_Diario ? `<p class="suave pequeno">${travado ? 'Este dia já foi validado pelo Coordenador e não pode mais ser alterado.'
+        ${salvo.ID_Diario ? `<p class="suave pequeno">${travado ? 'Este dia já foi validado pelo Coordenador. O texto não muda mais, mas ainda dá para anexar fotos.'
           : 'Este dia já tem registro. Salvar de novo atualiza o registro e manda para validação.'}</p>` : ''}
-        ${d.Situacao === 'Devolvido' ? `<div class="aviso erro">Devolvido: ${esc(d.Comentario)}</div>` : ''}
-        <div class="campos">
+        ${rascunho ? `<div class="aviso info">Rascunho guardado neste aparelho, ainda não enviado. Confira e clique em "Salvar o dia".</div>` : ''}
+        ${salvo.Situacao === 'Devolvido' ? `<div class="aviso erro">Devolvido: ${esc(salvo.Comentario)}</div>` : ''}
+        <div class="campos" id="form-diario" oninput="guardarRascunhoDiario()" onchange="guardarRascunhoDiario()">
           <div class="campo"><label for="di-data">Dia</label><input id="di-data" type="date" max="${f.hoje}" value="${estado.fisDia}"
-            onchange="abrirPainelFiscal('diario', this.value)"></div>
-          <div class="campo"><label for="di-clima">Clima</label><select id="di-clima" ${travado ? 'disabled' : ''}>${f.climas.map(c =>
+            oninput="event.stopPropagation()" onchange="event.stopPropagation(); abrirPainelFiscal('diario', this.value)"></div>
+          <div class="campo"><label for="di-clima">Clima</label><select id="di-clima" ${dis}>${f.climas.map(c =>
             `<option ${c === d.Clima ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
           <div class="campo"><label for="di-pessoas">Pessoas na obra</label><input id="di-pessoas" type="number" min="0" inputmode="numeric"
-            value="${esc(d.Pessoas)}" ${travado ? 'disabled' : ''}></div>
+            value="${esc(d.Pessoas)}" ${dis}></div>
           <div class="campo largo"><label for="di-equipe">Equipe (quem estava)</label><input id="di-equipe" value="${esc(d.Equipe)}"
-            placeholder="Ex.: Empreiteira Silva – 2 pedreiros e 2 serventes; eletricista" ${travado ? 'disabled' : ''}></div>
-          <div class="campo largo"><label for="di-servicos">Serviços feitos</label><textarea id="di-servicos" ${travado ? 'disabled' : ''}
+            placeholder="Ex.: Empreiteira Silva – 2 pedreiros e 2 serventes; eletricista" ${dis}></div>
+          <div class="campo largo"><label for="di-servicos">Serviços feitos</label><textarea id="di-servicos" ${dis}
             placeholder="Ex.: reboco da cozinha e contrapiso dos banheiros">${esc(d.Servicos)}</textarea></div>
-          <div class="campo largo"><label for="di-ocorrencias">Ocorrências</label><textarea id="di-ocorrencias" ${travado ? 'disabled' : ''}
+          <div class="campo largo"><label for="di-ocorrencias">Ocorrências</label><textarea id="di-ocorrencias" ${dis}
             placeholder="Ex.: faltou água à tarde; visita do cliente">${esc(d.Ocorrencias)}</textarea></div>
-          ${fotos ? `<div class="campo largo"><label>Fotos já enviadas</label><div>${linksFotos(d.Fotos)}</div></div>` : ''}
-          ${!travado && fotos < 4 ? `<div class="campo largo"><label for="di-fotos">Fotos (até ${4 - fotos})</label>
-            <input id="di-fotos" type="file" accept="image/*" multiple></div>` : ''}
+          ${fotos ? `<div class="campo largo"><label>Fotos já enviadas (${fotos})</label><div>${linksFotos(salvo.Fotos)}</div></div>` : ''}
+          ${livres > 0 ? `<div class="campo largo"><label for="di-fotos">Fotos (até ${livres})</label>
+            <input id="di-fotos" type="file" accept="image/*" multiple>
+            <div class="suave pequeno" style="margin-top:4px">Sem internet na obra? Tire as fotos com a câmera do celular normalmente.
+              Quando tiver sinal, abra este dia no calendário e escolha as fotos da galeria.</div></div>` : ''}
         </div>
-        <div class="acoes">${fechar}${travado ? '' : `<button class="botao primario" onclick="salvarDiarioTela()">Salvar o dia</button>`}</div>
+        <div class="acoes">${fechar}
+          ${travado ? (livres > 0 && salvo.ID_Diario ? `<button class="botao primario" onclick="adicionarFotosTela()">Anexar fotos</button>` : '')
+            : `<button class="botao primario" onclick="salvarDiarioTela()">Salvar o dia</button>`}</div>
       </div>`;
     }
 
@@ -3305,19 +3450,65 @@
     </div>`;
   }
 
-  async function salvarDiarioTela() {
+  function chaveRascunhoDiario() { return 'rascunho-diario:' + estado.fis.obra.ID_Obra + ':' + estado.fisDia; }
+
+  function dadosDoDiario() {
+    return { Data: valorDe('di-data'), Clima: valorDe('di-clima'), Pessoas: valorDe('di-pessoas'), Equipe: valorDe('di-equipe'),
+      Servicos: valorDe('di-servicos'), Ocorrencias: valorDe('di-ocorrencias') };
+  }
+
+  // Guarda o que foi digitado e ainda não foi enviado (igual ao já salvo não conta como rascunho)
+  function guardarRascunhoDiario() {
+    const d = dadosDoDiario();
+    const salvo = estado.fis.diario.find(x => x.Data === estado.fisDia) || {};
+    const campos = ['Clima', 'Pessoas', 'Equipe', 'Servicos', 'Ocorrencias'];
+    const mudou = campos.some(c => String(d[c] ?? '') !== String(salvo[c] ?? (c === 'Clima' ? estado.fis.climas[0] : '')));
+    gravarLocal(chaveRascunhoDiario(), mudou && (d.Servicos || d.Ocorrencias || d.Equipe) ? JSON.stringify(d) : '');
+  }
+
+  function lerRascunhoDiario() {
+    try { return JSON.parse(lerLocal(chaveRascunhoDiario()) || 'null'); } catch (e) { return null; }
+  }
+
+  function apagarRascunhoDiario() {
+    try { localStorage.removeItem(chaveRascunhoDiario()); } catch (e) { /* sem armazenamento */ }
+  }
+
+  async function lerFotosDoDiario() {
     const campo = document.getElementById('di-fotos');
-    const arquivos = campo ? Array.from(campo.files) : [];
+    const fotos = [];
+    for (const a of campo ? Array.from(campo.files) : []) fotos.push(await lerArquivo(a));
+    return fotos;
+  }
+
+  function erroDeInternet(erro) {
+    return !navigator.onLine || /falar com o servidor|demorou demais|Sem internet/.test(String(erro && erro.message));
+  }
+
+  async function salvarDiarioTela() {
+    guardarRascunhoDiario();
     travarBotoes(true);
     try {
-      const fotos = [];
-      for (const a of arquivos) fotos.push(await lerArquivo(a));
-      await chamar('salvarDiario', estado.fis.obra.ID_Obra, {
-        Data: valorDe('di-data'), Clima: valorDe('di-clima'), Pessoas: valorDe('di-pessoas'), Equipe: valorDe('di-equipe'),
-        Servicos: valorDe('di-servicos'), Ocorrencias: valorDe('di-ocorrencias')
-      }, fotos, auth());
+      const fotos = await lerFotosDoDiario();
+      await chamar('salvarDiario', estado.fis.obra.ID_Obra, dadosDoDiario(), fotos, auth());
+      apagarRascunhoDiario();
       await recarregarFiscal();
       mostrarMensagem('Diário salvo! Foi para validação do Coordenador.');
+    } catch (erro) {
+      if (erroDeInternet(erro)) mostrarMensagem('Sem internet agora. O texto ficou guardado neste aparelho: abra este dia e salve de novo quando tiver sinal.', 'erro');
+      else mostrarErro(erro);
+      travarBotoes(false);
+    }
+  }
+
+  async function adicionarFotosTela() {
+    travarBotoes(true);
+    try {
+      const fotos = await lerFotosDoDiario();
+      if (!fotos.length) throw new Error('Escolha as fotos.');
+      await chamar('adicionarFotosDiario', estado.fis.obra.ID_Obra, estado.fisDia, fotos, auth());
+      await recarregarFiscal();
+      mostrarMensagem('Fotos anexadas ao dia ' + dataBR(estado.fisDia) + '.');
     } catch (erro) { mostrarErro(erro); travarBotoes(false); }
   }
 
