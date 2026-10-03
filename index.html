@@ -1260,9 +1260,10 @@
     ]],
     ['Pagamento', [
       ['FormaPagamento', 'Forma de pagamento', ['À vista', 'Parcelado direto', 'Financiamento']],
+      ['Entrada', 'Entrada (R$)', 'dinheiro', 'so-entrada'],
       ['QtdParcelas', 'Quantidade de parcelas', 'numero', 'so-parcelado'],
       ['JurosMensal', 'Juros (% ao mês)', 'numero', 'so-parcelado'],
-      ['ResumoParcelas', 'Parcelamento', 'resumo', 'largo so-parcelado'],
+      ['ResumoParcelas', 'Resumo do pagamento', 'resumo', 'largo so-entrada'],
       ['Banco', 'Banco do financiamento', 'texto', 'so-financiamento']
     ]],
     ['Observações', [
@@ -1280,7 +1281,7 @@
       const valor = comercial[nome] ?? '';
       let conteudo;
       // Campos que mudam o cálculo das parcelas recalculam na hora
-      const recalcula = ['FormaPagamento', 'QtdParcelas', 'JurosMensal', 'ValorFechado'].includes(nome)
+      const recalcula = ['FormaPagamento', 'Entrada', 'QtdParcelas', 'JurosMensal', 'ValorFechado'].includes(nome)
         ? ' oninput="atualizarPagamento()" onchange="atualizarPagamento()"' : '';
       if (tipo === 'resumo') {
         conteudo = `<div class="valor resumo-parcelas" id="resumo-parcelas"></div>`;
@@ -1363,27 +1364,37 @@
     atualizarPagamento();
   }
 
-  // Mostra os campos de parcelas ou de banco conforme a forma de pagamento e calcula as parcelas
+  // Mostra os campos certos para cada forma de pagamento e calcula entrada, saldo e parcelas
   function atualizarPagamento() {
     const c = estado.obraAberta.comercial;
     const ler = nome => { const el = document.querySelector(`#form-comercial [name="${nome}"]`); return el ? el.value : c[nome]; };
+    const num = nome => Number(String(ler(nome) ?? '').replace(',', '.')) || 0;
     const forma = ler('FormaPagamento');
-    document.querySelectorAll('#form-comercial .so-parcelado').forEach(el => { el.hidden = forma !== 'Parcelado direto'; });
-    document.querySelectorAll('#form-comercial .so-financiamento').forEach(el => { el.hidden = forma !== 'Financiamento'; });
+    const parcelado = forma === 'Parcelado direto', financiamento = forma === 'Financiamento';
+    document.querySelectorAll('#form-comercial .so-parcelado').forEach(el => { el.hidden = !parcelado; });
+    document.querySelectorAll('#form-comercial .so-financiamento').forEach(el => { el.hidden = !financiamento; });
+    document.querySelectorAll('#form-comercial .so-entrada').forEach(el => { el.hidden = !parcelado && !financiamento; });
     const resumo = document.getElementById('resumo-parcelas');
-    if (!resumo) return;
-    const valor = Number(String(ler('ValorFechado') ?? '').replace(',', '.'));
-    const n = parseInt(ler('QtdParcelas'), 10);
-    const juros = Number(String(ler('JurosMensal') ?? '').replace(',', '.')) || 0;
-    if (!(valor > 0) || !(n >= 1)) {
-      resumo.innerHTML = '<span class="suave">Informe o valor fechado e a quantidade de parcelas.</span>';
+    if (!resumo || (!parcelado && !financiamento)) return;
+
+    const valor = num('ValorFechado'), entrada = num('Entrada');
+    const saldo = valor - entrada;
+    if (!(valor > 0)) { resumo.innerHTML = '<span class="suave">Informe o valor fechado.</span>'; return; }
+    if (entrada >= valor) { resumo.innerHTML = '<span class="texto-erro">A entrada precisa ser menor que o valor fechado.</span>'; return; }
+    const txtEntrada = entrada > 0 ? `Entrada de <strong>${dinheiro(entrada)}</strong> · ` : 'Sem entrada · ';
+
+    if (financiamento) {
+      resumo.innerHTML = txtEntrada + `financiado pelo banco: <strong>${dinheiro(saldo)}</strong>`;
       return;
     }
-    const i = juros / 100;
-    const parcela = i === 0 ? valor / n : valor * i / (1 - Math.pow(1 + i, -n));
-    const total = parcela * n;
-    resumo.innerHTML = `<strong>${n}x de ${dinheiro(parcela)}</strong> · total ${dinheiro(total)} · ` +
-      (i === 0 ? 'sem juros' : `juros de ${dinheiro(total - valor)} (${String(juros).replace('.', ',')}% ao mês)`);
+    const n = parseInt(ler('QtdParcelas'), 10);
+    if (!(n >= 1)) { resumo.innerHTML = txtEntrada + '<span class="suave">informe a quantidade de parcelas.</span>'; return; }
+    const juros = num('JurosMensal'), i = juros / 100;
+    const parcela = i === 0 ? saldo / n : saldo * i / (1 - Math.pow(1 + i, -n));
+    const totalParcelas = parcela * n;
+    resumo.innerHTML = txtEntrada + `saldo de ${dinheiro(saldo)} em <strong>${n}x de ${dinheiro(parcela)}</strong><br>` +
+      `Total pago pelo cliente: <strong>${dinheiro(entrada + totalParcelas)}</strong> · ` +
+      (i === 0 ? 'sem juros' : `juros de ${dinheiro(totalParcelas - saldo)} (${String(juros).replace('.', ',')}% ao mês)`);
   }
 
   async function salvarFichaComercial(silencioso) {
@@ -1670,8 +1681,10 @@
             <div><dt>CPF</dt><dd>${esc(venda.CPF) || '—'}</dd></div>
             <div><dt>Valor fechado</dt><dd>${dinheiro(venda.ValorFechado)}</dd></div>
             <div><dt>Pagamento</dt><dd>${esc(venda.FormaPagamento) || '—'}${venda.Banco && venda.FormaPagamento === 'Financiamento' ? ' · ' + esc(venda.Banco) : ''}
+              ${Number(venda.Entrada) ? `<div class="suave pequeno">Entrada de ${dinheiro(venda.Entrada)}</div>` : ''}
               ${venda.FormaPagamento === 'Parcelado direto' && venda.QtdParcelas ? `<div class="suave pequeno">${venda.QtdParcelas}x de ${dinheiro(venda.ValorParcela)}
-                · ${Number(venda.JurosMensal) ? String(venda.JurosMensal).replace('.', ',') + '% ao mês' : 'sem juros'}</div>` : ''}</dd></div>
+                · ${Number(venda.JurosMensal) ? String(venda.JurosMensal).replace('.', ',') + '% ao mês' : 'sem juros'}</div>` : ''}
+              ${venda.FormaPagamento === 'Financiamento' && Number(venda.ValorFechado) ? `<div class="suave pequeno">Financiado: ${dinheiro(Number(venda.ValorFechado) - (Number(venda.Entrada) || 0))}</div>` : ''}</dd></div>
             <div><dt>Prazo prometido ao cliente</dt><dd>${dataBR(venda.PrazoPrometido)}</dd></div>
             <div><dt>Personalizações</dt><dd>${esc(venda.Personalizacoes) || '—'}</dd></div>
           </dl>
