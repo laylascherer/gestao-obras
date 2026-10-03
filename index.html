@@ -143,6 +143,8 @@
   .campos { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px 20px; }
   .campo label { display: block; font-size: 12px; font-weight: 600; color: var(--texto-suave); margin-bottom: 4px; text-transform: uppercase; letter-spacing: .3px; }
   .campo .valor { padding: 9px 0; }
+  .campo[hidden] { display: none; }
+  .resumo-parcelas { background: var(--primaria-clara); color: var(--texto); border-radius: 8px; padding: 10px 12px; }
   .campo input, .campo select, .campo textarea {
     width: 100%; padding: 9px 12px; border: 1px solid var(--borda); border-radius: 8px; background: #fff;
   }
@@ -1258,7 +1260,10 @@
     ]],
     ['Pagamento', [
       ['FormaPagamento', 'Forma de pagamento', ['À vista', 'Parcelado direto', 'Financiamento']],
-      ['Banco', 'Banco (se financiamento)', 'texto']
+      ['QtdParcelas', 'Quantidade de parcelas', 'numero', 'so-parcelado'],
+      ['JurosMensal', 'Juros (% ao mês)', 'numero', 'so-parcelado'],
+      ['ResumoParcelas', 'Parcelamento', 'resumo', 'largo so-parcelado'],
+      ['Banco', 'Banco do financiamento', 'texto', 'so-financiamento']
     ]],
     ['Observações', [
       ['ObservacoesNegociacao', 'Observações da negociação', 'textoLongo', 'largo']
@@ -1274,17 +1279,23 @@
     const campo = ([nome, rotulo, tipo, largura]) => {
       const valor = comercial[nome] ?? '';
       let conteudo;
-      if (!editavel) {
+      // Campos que mudam o cálculo das parcelas recalculam na hora
+      const recalcula = ['FormaPagamento', 'QtdParcelas', 'JurosMensal', 'ValorFechado'].includes(nome)
+        ? ' oninput="atualizarPagamento()" onchange="atualizarPagamento()"' : '';
+      if (tipo === 'resumo') {
+        conteudo = `<div class="valor resumo-parcelas" id="resumo-parcelas"></div>`;
+      } else if (!editavel) {
         const texto = tipo === 'data' ? dataBR(valor) : tipo === 'dinheiro' ? dinheiro(valor) : esc(valor) || '—';
         conteudo = `<div class="valor">${texto}</div>`;
       } else if (Array.isArray(tipo)) {
-        conteudo = `<select name="${nome}"><option value="">Selecione…</option>${tipo.map(op =>
+        conteudo = `<select name="${nome}"${recalcula}><option value="">Selecione…</option>${tipo.map(op =>
           `<option ${op === valor ? 'selected' : ''}>${op}</option>`).join('')}</select>`;
       } else if (tipo === 'textoLongo') {
         conteudo = `<textarea name="${nome}">${esc(valor)}</textarea>`;
       } else {
         const tipoInput = tipo === 'data' ? 'date' : (tipo === 'numero' || tipo === 'dinheiro') ? 'number' : 'text';
-        conteudo = `<input type="${tipoInput}" name="${nome}" value="${esc(valor)}">`;
+        const passo = tipoInput === 'number' ? ' step="any" min="0"' : '';
+        conteudo = `<input type="${tipoInput}" name="${nome}" value="${esc(valor)}"${passo}${recalcula}>`;
       }
       return `<div class="campo ${largura || ''}"><label>${rotulo}</label>${conteudo}</div>`;
     };
@@ -1349,6 +1360,30 @@
               ${checklistCompleto ? '' : 'disabled'}>Enviar para Contrato →</button>` : ''}
         </div>` : ''}
     `);
+    atualizarPagamento();
+  }
+
+  // Mostra os campos de parcelas ou de banco conforme a forma de pagamento e calcula as parcelas
+  function atualizarPagamento() {
+    const c = estado.obraAberta.comercial;
+    const ler = nome => { const el = document.querySelector(`#form-comercial [name="${nome}"]`); return el ? el.value : c[nome]; };
+    const forma = ler('FormaPagamento');
+    document.querySelectorAll('#form-comercial .so-parcelado').forEach(el => { el.hidden = forma !== 'Parcelado direto'; });
+    document.querySelectorAll('#form-comercial .so-financiamento').forEach(el => { el.hidden = forma !== 'Financiamento'; });
+    const resumo = document.getElementById('resumo-parcelas');
+    if (!resumo) return;
+    const valor = Number(String(ler('ValorFechado') ?? '').replace(',', '.'));
+    const n = parseInt(ler('QtdParcelas'), 10);
+    const juros = Number(String(ler('JurosMensal') ?? '').replace(',', '.')) || 0;
+    if (!(valor > 0) || !(n >= 1)) {
+      resumo.innerHTML = '<span class="suave">Informe o valor fechado e a quantidade de parcelas.</span>';
+      return;
+    }
+    const i = juros / 100;
+    const parcela = i === 0 ? valor / n : valor * i / (1 - Math.pow(1 + i, -n));
+    const total = parcela * n;
+    resumo.innerHTML = `<strong>${n}x de ${dinheiro(parcela)}</strong> · total ${dinheiro(total)} · ` +
+      (i === 0 ? 'sem juros' : `juros de ${dinheiro(total - valor)} (${String(juros).replace('.', ',')}% ao mês)`);
   }
 
   async function salvarFichaComercial(silencioso) {
@@ -1634,7 +1669,9 @@
             <div><dt>Cliente</dt><dd>${esc(venda.NomeCliente) || '—'}</dd></div>
             <div><dt>CPF</dt><dd>${esc(venda.CPF) || '—'}</dd></div>
             <div><dt>Valor fechado</dt><dd>${dinheiro(venda.ValorFechado)}</dd></div>
-            <div><dt>Pagamento</dt><dd>${esc(venda.FormaPagamento) || '—'}${venda.Banco ? ' · ' + esc(venda.Banco) : ''}</dd></div>
+            <div><dt>Pagamento</dt><dd>${esc(venda.FormaPagamento) || '—'}${venda.Banco && venda.FormaPagamento === 'Financiamento' ? ' · ' + esc(venda.Banco) : ''}
+              ${venda.FormaPagamento === 'Parcelado direto' && venda.QtdParcelas ? `<div class="suave pequeno">${venda.QtdParcelas}x de ${dinheiro(venda.ValorParcela)}
+                · ${Number(venda.JurosMensal) ? String(venda.JurosMensal).replace('.', ',') + '% ao mês' : 'sem juros'}</div>` : ''}</dd></div>
             <div><dt>Prazo prometido ao cliente</dt><dd>${dataBR(venda.PrazoPrometido)}</dd></div>
             <div><dt>Personalizações</dt><dd>${esc(venda.Personalizacoes) || '—'}</dd></div>
           </dl>
