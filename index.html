@@ -401,8 +401,11 @@
     if (window.API_URL) {
       // Leituras (abrir telas, listar) tentam de novo sozinhas se o Google falhar por um instante.
       // Gravações não repetem, para não salvar nada em dobro.
-      const leitura = funcao === 'iniciarSessao' || funcao.startsWith('abrir') || funcao.startsWith('listar');
-      return pedirAoServidor(funcao, args, leitura ? 3 : 1).catch(falhou);
+      const leitura = funcao === 'iniciarSessao' || funcao.startsWith('abrir') || funcao.startsWith('listar') ||
+        funcao === 'enviarParteArquivo';
+      // Quem leva arquivo pode demorar mais no servidor (salvar no Drive)
+      const comArquivo = args.some(a => a && (a.base64 || a.envio));
+      return pedirAoServidor(funcao, args, leitura ? 3 : 1, comArquivo ? 150000 : 45000).catch(falhou);
     }
     return new Promise((resolve, reject) => {
       google.script.run
@@ -413,9 +416,9 @@
   }
 
   // Uma chamada ao servidor pelo endereço API_URL (site no GitHub)
-  function pedirAoServidor(funcao, args, tentativas) {
+  function pedirAoServidor(funcao, args, tentativas, tempoLimite = 45000) {
     const controle = new AbortController();
-    const limite = setTimeout(() => controle.abort(), 45000);
+    const limite = setTimeout(() => controle.abort(), tempoLimite);
     let falhaDeRede = false;
     return fetch(window.API_URL, {
       method: 'POST',
@@ -447,7 +450,7 @@
       .then(d => { if (!d.ok) throw new Error(d.erro); return d.r; })
       .catch(erro => {
         if (falhaDeRede && tentativas > 1) {
-          return new Promise(r => setTimeout(r, 2000)).then(() => pedirAoServidor(funcao, args, tentativas - 1));
+          return new Promise(r => setTimeout(r, 2000)).then(() => pedirAoServidor(funcao, args, tentativas - 1, tempoLimite));
         }
         throw erro;
       });
@@ -1460,6 +1463,52 @@
   const ICONE_CLIPE = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.4 11.1l-9.2 9.2a6 6 0 0 1-8.5-8.5l9.2-9.2a4 4 0 0 1 5.7 5.7l-9.2 9.2a2 2 0 0 1-2.8-2.8l8.5-8.5"/></svg>`;
   const TAMANHO_MAXIMO_MB = 10;
 
+  // O Google falha com pedidos muito grandes: arquivos acima disso vão em pedaços
+  const TAMANHO_PEDACO = 1500000; // caracteres de base64 (múltiplo de 4)
+
+  // Lê um arquivo escolhido no computador/celular e prepara para enviar.
+  // Se for grande, já manda os pedaços para o servidor e devolve só a "senha" do envio.
+  async function lerArquivo(arquivo) {
+    if (arquivo.size > TAMANHO_MAXIMO_MB * 1024 * 1024) {
+      throw new Error(`O arquivo passa de ${TAMANHO_MAXIMO_MB} MB. Envie um arquivo menor.`);
+    }
+    const base64 = await new Promise((resolve, reject) => {
+      const leitor = new FileReader();
+      leitor.onload = () => resolve(leitor.result.split(',')[1]);
+      leitor.onerror = () => reject(new Error('Não foi possível ler o arquivo.'));
+      leitor.readAsDataURL(arquivo);
+    });
+    const dados = { nome: arquivo.name, tipo: arquivo.type || 'application/octet-stream' };
+    if (base64.length <= TAMANHO_PEDACO || !window.API_URL) return { ...dados, base64 };
+
+    const envio = Date.now().toString(36) + Math.random().toString(36).slice(2, 10);
+    const partes = Math.ceil(base64.length / TAMANHO_PEDACO);
+    try {
+      for (let i = 0; i < partes; i++) {
+        mostrarProgressoEnvio(Math.round(i / partes * 100));
+        await chamar('enviarParteArquivo', envio, i, base64.slice(i * TAMANHO_PEDACO, (i + 1) * TAMANHO_PEDACO), auth());
+      }
+      mostrarProgressoEnvio(100);
+    } catch (erro) {
+      document.getElementById('progresso-envio')?.remove();
+      throw erro;
+    }
+    return { ...dados, envio, partes };
+  }
+
+  // Aviso fixo com a porcentagem do envio (some com a próxima mensagem)
+  function mostrarProgressoEnvio(pct) {
+    let aviso = document.getElementById('progresso-envio');
+    if (!aviso) {
+      document.querySelectorAll('.mensagem').forEach(m => m.remove());
+      aviso = document.createElement('div');
+      aviso.id = 'progresso-envio';
+      aviso.className = 'mensagem';
+      document.body.appendChild(aviso);
+    }
+    aviso.textContent = pct < 100 ? `Enviando arquivo… ${pct}%` : 'Salvando no Google Drive…';
+  }
+
   // Lê o arquivo escolhido, converte para texto (base64) e envia para o Drive
   async function enviarArquivo(idDocumento, campo) {
     const arquivo = campo.files[0];
@@ -1474,14 +1523,7 @@
     linha.querySelector('.anexo').insertAdjacentHTML('afterbegin', '<span class="suave">Enviando…</span>');
 
     try {
-      const base64 = await new Promise((resolve, reject) => {
-        const leitor = new FileReader();
-        leitor.onload = () => resolve(leitor.result.split(',')[1]);
-        leitor.onerror = () => reject(new Error('Não foi possível ler o arquivo.'));
-        leitor.readAsDataURL(arquivo);
-      });
-      const resposta = await chamar('anexarDocumento', idDocumento,
-        { nome: arquivo.name, tipo: arquivo.type || 'application/octet-stream', base64 }, auth());
+      const resposta = await chamar('anexarDocumento', idDocumento, await lerArquivo(arquivo), auth());
       Object.assign(estado.obraAberta.documentos.find(d => d.ID_Documento === idDocumento), resposta);
       mostrarMensagem('Arquivo anexado!');
     } catch (erro) {
@@ -1527,20 +1569,6 @@
    * ========================================================= */
   const PASSOS_CONTRATO = ['Em elaboração', 'Aguardando assinatura', 'Assinado'];
 
-  // Lê um arquivo escolhido no computador/celular e prepara para enviar
-  function lerArquivo(arquivo) {
-    return new Promise((resolve, reject) => {
-      if (arquivo.size > TAMANHO_MAXIMO_MB * 1024 * 1024) {
-        return reject(new Error(`O arquivo passa de ${TAMANHO_MAXIMO_MB} MB. Envie um arquivo menor.`));
-      }
-      const leitor = new FileReader();
-      leitor.onload = () => resolve({
-        nome: arquivo.name, tipo: arquivo.type || 'application/octet-stream', base64: leitor.result.split(',')[1]
-      });
-      leitor.onerror = () => reject(new Error('Não foi possível ler o arquivo.'));
-      leitor.readAsDataURL(arquivo);
-    });
-  }
 
   async function telaContrato(idObra) {
     carregando('Abrindo Contrato…');
