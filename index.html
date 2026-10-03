@@ -341,9 +341,105 @@
   .regra-aprovacao .campo { min-width: 200px; }
   .link-tabela { color: var(--primaria); font-weight: 600; cursor: pointer; text-decoration: none; }
 
+  /* ---------- Fiscal (pensado para o celular) ---------- */
+  .botoes-grandes { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; margin-bottom: 20px; }
+  .botao-grande { position: relative; display: grid; gap: 4px; text-align: left; padding: 18px 16px; min-height: 92px; cursor: pointer;
+    background: var(--cartao); border: 1px solid var(--borda); border-left: 5px solid var(--primaria); border-radius: var(--raio); box-shadow: var(--sombra); }
+  .botao-grande strong { font-size: 16px; }
+  .botao-grande span { font-size: 13px; color: var(--texto-suave); }
+  .botao-grande:hover { background: var(--primaria-clara); }
+  .botao-grande .contador { position: absolute; top: 10px; right: 10px; color: #3d2a00; }
+  .navegar-mes { display: flex; align-items: center; gap: 10px; text-transform: capitalize; }
+  .calendario { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 4px; }
+  .dia-semana { text-align: center; font-size: 12px; font-weight: 600; color: var(--texto-suave); padding: 4px 0; }
+  .dia { aspect-ratio: 1; min-height: 34px; border: 1px solid var(--borda); border-radius: 8px; background: var(--cartao); cursor: pointer;
+    font-weight: 600; font-variant-numeric: tabular-nums; padding: 0; }
+  .dia:hover:not(:disabled) { outline: 2px solid var(--primaria); }
+  .dia.fds { background: var(--fundo); color: var(--texto-suave); }
+  .dia.futuro { opacity: .35; cursor: default; }
+  .dia.hoje { border: 2px solid var(--primaria); }
+  .dia.st-validado { background: var(--verde-claro); color: var(--verde); border-color: #b7e0c6; }
+  .dia.st-aguardando-validacao { background: var(--amarelo-claro); color: var(--amarelo); border-color: #f2d9a6; }
+  .dia.st-devolvido { background: var(--vermelho-claro); color: var(--vermelho); border-color: #f5b5b5; }
+  .legenda { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 10px; margin-top: 10px; }
+  .ponto { display: inline-block; width: 12px; height: 12px; border-radius: 3px; margin-right: -4px; }
+  .feed { list-style: none; padding: 0; margin: 0; display: grid; gap: 0; }
+  .feed li { padding: 12px 0; border-bottom: 1px solid var(--cinza-claro); display: grid; gap: 4px; min-width: 0; overflow-wrap: anywhere; }
+  .feed li:last-child { border-bottom: 0; }
+  .cabecalho-feed { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 6px; }
+  .comentario-coord { background: var(--vermelho-claro); color: var(--vermelho); padding: 6px 10px; border-radius: 6px; }
+  .linha-andamento { display: grid; grid-template-columns: minmax(0, 1fr) minmax(120px, 2fr) 48px; gap: 12px; align-items: center;
+    padding: 10px 0; border-bottom: 1px solid var(--cinza-claro); }
+  .linha-andamento input[type=range] { width: 100%; height: 28px; accent-color: var(--primaria); }
+  .linha-check { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 6px 12px; align-items: center; padding: 10px 0; border-bottom: 1px solid var(--cinza-claro); }
+  .linha-check .obs-vistoria { grid-column: 1 / -1; padding: 7px 10px; border: 1px solid var(--borda); border-radius: 8px; }
+  .linha-check .obs-vistoria[hidden] { display: none; }
+  .opcoes-check { display: flex; flex-wrap: wrap; gap: 6px; }
+  .opcoes-check label { display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px; border-radius: 999px; font-size: 13px; cursor: pointer;
+    border: 1px solid var(--borda); background: var(--cartao) !important; color: var(--texto) !important; }
+  .opcoes-check label:has(input:checked).st-conforme { background: var(--verde-claro) !important; color: var(--verde) !important; border-color: var(--verde); }
+  .opcoes-check label:has(input:checked).st-nao-conforme { background: var(--vermelho-claro) !important; color: var(--vermelho) !important; border-color: var(--vermelho); }
+  .opcoes-check label:has(input:checked).st-nao-se-aplica { background: var(--cinza-claro) !important; border-color: var(--cinza); }
+  .problema { border: 1px solid var(--borda); border-left: 5px solid var(--cinza); border-radius: 8px; padding: 12px 14px; margin-bottom: 10px;
+    display: grid; gap: 6px; background: var(--cartao); min-width: 0; overflow-wrap: anywhere; }
+  .problema.gravidade-st-alta { border-left-color: var(--vermelho); }
+  .problema.gravidade-st-media { border-left-color: var(--amarelo); }
+  .plano-acao { background: var(--fundo); border-radius: 6px; padding: 8px 10px; }
+  .resolver-linha { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin-top: 4px; }
+  .resolver-linha input { flex: 1; min-width: 180px; padding: 6px 10px; border: 1px solid var(--borda); border-radius: 8px; }
+  .progresso.atrasado > div { background: var(--vermelho); }
+
+  /* ---------- Coordenador ---------- */
+  .cartao-validacao { border-left: 4px solid var(--amarelo); display: grid; gap: 10px; }
+  .det-registro { display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: 4px 14px; margin: 0; font-size: 14px; }
+  .det-registro dt { color: var(--texto-suave); font-weight: 600; }
+  .det-registro dd { margin: 0; overflow-wrap: anywhere; }
+  .medicao-de-para { display: flex; align-items: baseline; gap: 10px; font-size: 22px; }
+  .lista-check-validar { list-style: none; padding: 0; margin: 0; display: grid; gap: 4px; font-size: 14px; }
+
+  /* ---------- Financeiro ---------- */
+  .indicadores { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; margin-bottom: 16px; }
+  .indicador { background: var(--cartao); border: 1px solid var(--borda); border-radius: 10px; padding: 12px 14px; display: grid; gap: 2px; }
+  .indicador span { font-size: 12px; color: var(--texto-suave); font-weight: 600; text-transform: uppercase; letter-spacing: .3px; }
+  .indicador strong { font-size: 20px; font-variant-numeric: tabular-nums; }
+  .indicador.ruim { border-color: #f5b5b5; background: var(--vermelho-claro); }
+  .indicador.ruim strong { color: var(--vermelho); }
+  .linha-atrasada td { background: #fff7f7; }
+  .linha-comparacao { display: grid; grid-template-columns: minmax(90px, 1fr) minmax(0, 3fr) auto; gap: 12px; align-items: center;
+    padding: 10px 0; border-bottom: 1px solid var(--cinza-claro); }
+  .barras { display: grid; gap: 4px; }
+  .barra-cmp { height: 12px; border-radius: 999px; min-width: 2px; overflow: hidden; }
+  .barra-cmp.previsto, .ponto.previsto { background: #cfd8e6; }
+  .barra-cmp.comprometido, .ponto.comprometido { background: #9cbcf0; }
+  .barra-cmp.estourou { background: #f3a6a6; }
+  .barra-cmp .pago, .ponto.pago { background: var(--primaria); height: 100%; }
+  .barra-cmp.estourou .pago { background: var(--vermelho); }
+  .totais-comparacao { display: flex; flex-wrap: wrap; gap: 8px 24px; margin-top: 14px; }
+
+  /* ---------- Entrega e Pós-venda ---------- */
+  .quadro { display: grid; grid-template-columns: repeat(4, minmax(200px, 1fr)); gap: 12px; overflow-x: auto; }
+  .coluna-quadro { background: var(--fundo); border-radius: 10px; padding: 10px; display: grid; gap: 10px; align-content: start; min-width: 0; }
+  .titulo-coluna { font-weight: 700; font-size: 14px; }
+  .cartao-chamado { background: var(--cartao); border: 1px solid var(--borda); border-radius: 8px; padding: 10px; display: grid; gap: 6px;
+    box-shadow: var(--sombra); min-width: 0; overflow-wrap: anywhere; }
+  .cartao-chamado .campo input, .cartao-chamado .campo select { padding: 6px 8px; }
+
+  /* ---------- Etiquetas dos novos setores ---------- */
+  .st-aguardando-validacao, .st-media, .st-em-reparo, .st-em-vistoria { background: var(--amarelo-claro); color: var(--amarelo); }
+  .st-validado, .st-resolvido, .st-pago, .st-encerrado, .st-conforme, .st-vigente { background: var(--verde-claro); color: var(--verde); }
+  .st-devolvido, .st-alta, .st-atrasado, .st-aberto, .st-nao-conforme, .st-vencida { background: var(--vermelho-claro); color: var(--vermelho); }
+  .st-em-correcao, .st-a-vencer, .st-visita-agendada { background: var(--primaria-clara); color: var(--primaria); }
+  .st-baixa, .st-nao-se-aplica, .st-nao-iniciada { background: var(--cinza-claro); color: #4a5568; }
+
   @media (max-width: 900px) { .duas-colunas { grid-template-columns: minmax(0, 1fr); } .funil { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); } }
 
   @media (max-width: 640px) {
+    .linha-andamento { grid-template-columns: minmax(0, 1fr) 48px; }
+    .linha-andamento input[type=range] { grid-column: 1 / -1; grid-row: 2; }
+    .linha-check { grid-template-columns: minmax(0, 1fr); }
+    .linha-comparacao { grid-template-columns: minmax(0, 1fr) auto; }
+    .linha-comparacao .barras { grid-column: 1 / -1; grid-row: 2; }
+    .botoes-grandes { grid-template-columns: repeat(2, minmax(0, 1fr)); }
     .topo { flex-wrap: wrap; padding: 12px 16px; }
     .area-usuario { width: 100%; }
     main { padding: 16px; }
@@ -537,7 +633,10 @@
     if (partes[0] === 'obra' && partes[2] === 'compras') return telaCompras(partes[1]);
     if (partes[0] === 'obra' && partes[2] === 'expedicao') return telaExpedicao(partes[1]);
     if (partes[0] === 'obra' && partes[2] === 'gestor') return telaGestor(partes[1]);
-    if (partes[0] === 'obra' && partes[2] === 'etapa') return telaEtapa(partes[1], partes[3]);
+    if (partes[0] === 'obra' && partes[2] === 'fiscal') return telaFiscal(partes[1]);
+    if (partes[0] === 'obra' && partes[2] === 'coordenador') return telaCoordenador(partes[1]);
+    if (partes[0] === 'obra' && partes[2] === 'financeiro') return telaFinanceiro(partes[1]);
+    if (partes[0] === 'obra' && partes[2] === 'entrega') return telaEntrega(partes[1]);
     if (partes[0] === 'obra') return telaObra(partes[1]);
     return telaHome();
   }
@@ -1108,7 +1207,7 @@
           <div class="etiquetas">${etiqueta(obra.Status)}${obra.Atrasada ? etiqueta('Atrasada') : ''}</div>
         </div>
         <div class="cartao resumo-andamento">
-          <div class="suave">Andamento</div>
+          <div class="suave">${obra.AndamentoFisico ? 'Andamento físico' : 'Andamento'}</div>
           <div class="numero">${obra.Andamento}%</div>
           <div class="progresso"><div style="width:${obra.Andamento}%"></div></div>
           <div class="suave" style="margin-top:8px;font-size:13px">
@@ -1153,101 +1252,10 @@
     if (etapa.Setor === 'Compras') return irPara('#/obra/' + idObra + '/compras');
     if (etapa.Setor === 'Expedição') return irPara('#/obra/' + idObra + '/expedicao');
     if (etapa.Setor === 'Gestor') return irPara('#/obra/' + idObra + '/gestor');
-    irPara('#/obra/' + idObra + '/etapa/' + idEtapa);
-  }
-
-  /* =========================================================
-   * TELA 5 – Etapa de um setor (Contrato em diante)
-   * Por enquanto: situação e observações. Os campos próprios de
-   * cada setor entram um por vez nas próximas etapas do projeto.
-   * ========================================================= */
-  const SITUACOES_ETAPA = ['Não iniciado', 'Aguardando', 'Em andamento', 'Concluído'];
-
-  async function telaEtapa(idObra, idEtapa) {
-    carregando('Abrindo setor…');
-    try {
-      estado.obraAberta = await chamar('abrirObra', idObra, auth());
-      const etapa = estado.obraAberta.etapas.find(e => e.ID_Etapa === idEtapa);
-      if (!etapa || !etapa.Liberado) {
-        mostrarMensagem('Você não tem acesso a este setor.', 'erro');
-        return desenharObra();
-      }
-      desenharEtapa(etapa);
-    } catch (erro) { mostrarErro(erro); irPara('#/'); }
-  }
-
-  function desenharEtapa(etapa) {
-    const { obra, etapas } = estado.obraAberta;
-    const indice = etapas.indexOf(etapa);
-    const anterior = etapas[indice - 1];
-    const editavel = etapa.PodeEditar;
-    const concluida = etapa.Situacao === 'Concluído';
-
-    let aviso = '';
-    if (!editavel) {
-      aviso = `<div class="aviso info">Você está vendo esta etapa apenas para consulta.</div>`;
-    } else if (anterior && anterior.Situacao !== 'Concluído') {
-      aviso = `<div class="aviso">A etapa anterior (${esc(anterior.Setor)}) ainda está como
-        "${esc(anterior.Situacao)}". Você pode trabalhar nesta etapa mesmo assim.</div>`;
-    }
-
-    const situacao = editavel
-      ? `<select name="Situacao">${SITUACOES_ETAPA.map(s =>
-          `<option ${s === etapa.Situacao ? 'selected' : ''}>${s}</option>`).join('')}</select>`
-      : `<div class="valor">${etiqueta(etapa.Situacao)}</div>`;
-    const observacoes = editavel
-      ? `<textarea name="Observacoes" placeholder="Anotações desta etapa…">${esc(etapa.Observacoes)}</textarea>`
-      : `<div class="valor">${esc(etapa.Observacoes) || '—'}</div>`;
-
-    tela(`
-      <a class="link-voltar" onclick="irPara('#/obra/${obra.ID_Obra}')">← Voltar para a obra ${esc(obra.Codigo)}</a>
-      <div class="cabecalho-obra">
-        <div>
-          <div class="codigo">${esc(obra.Codigo)} · ${esc(etapa.Setor).toUpperCase()}</div>
-          <h1>${esc(obra.Cliente)}</h1>
-          <div class="etiquetas">${etiqueta(etapa.Situacao)}</div>
-        </div>
-      </div>
-
-      ${aviso}
-
-      <div class="cartao secao">
-        <h2>Andamento da etapa</h2>
-        <div class="campos" id="form-etapa">
-          <div class="campo"><label>Situação</label>${situacao}</div>
-          <div class="campo"><label>Início</label><div class="valor">${dataBR(etapa.DataInicio)}</div></div>
-          <div class="campo"><label>Conclusão</label><div class="valor">${dataBR(etapa.DataConclusao)}</div></div>
-          <div class="campo"><label>Última atualização por</label><div class="valor">${esc(etapa.Responsavel) || '—'}</div></div>
-          <div class="campo largo"><label>Observações</label>${observacoes}</div>
-        </div>
-        ${editavel ? `
-          <div class="acoes">
-            <button class="botao" id="btn-salvar-etapa" onclick="salvarEtapa('${etapa.ID_Etapa}')">Salvar</button>
-            ${!concluida ? `<button class="botao sucesso" id="btn-concluir-etapa"
-                onclick="salvarEtapa('${etapa.ID_Etapa}', true)">Concluir etapa →</button>` : ''}
-          </div>` : ''}
-      </div>
-
-      <div class="aviso info">Os campos específicos do setor ${esc(etapa.Setor)} serão adicionados nas próximas etapas do projeto.</div>
-    `);
-  }
-
-  async function salvarEtapa(idEtapa, concluir) {
-    const dados = lerFormulario('form-etapa');
-    if (concluir) {
-      const etapa = estado.obraAberta.etapas.find(e => e.ID_Etapa === idEtapa);
-      if (!confirm(`Concluir a etapa ${etapa.Setor}? O próximo setor passa para "Aguardando".`)) return;
-      dados.Situacao = 'Concluído';
-    }
-    document.querySelectorAll('#btn-salvar-etapa, #btn-concluir-etapa').forEach(b => b.disabled = true);
-    try {
-      await chamar('atualizarEtapa', idEtapa, dados, auth());
-      mostrarMensagem(concluir ? 'Etapa concluída!' : 'Etapa salva!');
-      telaObra(estado.obraAberta.obra.ID_Obra);
-    } catch (erro) {
-      mostrarErro(erro);
-      document.querySelectorAll('#btn-salvar-etapa, #btn-concluir-etapa').forEach(b => b.disabled = false);
-    }
+    if (etapa.Setor === 'Fiscal') return irPara('#/obra/' + idObra + '/fiscal');
+    if (etapa.Setor === 'Coordenador') return irPara('#/obra/' + idObra + '/coordenador');
+    if (etapa.Setor === 'Financeiro') return irPara('#/obra/' + idObra + '/financeiro');
+    if (etapa.Setor === 'Entrega/Pós-venda') return irPara('#/obra/' + idObra + '/entrega');
   }
 
   /* =========================================================
@@ -2590,8 +2598,36 @@
     } catch (erro) { mostrarErro(erro); irPara('#/obra/' + idObra); }
   }
 
+  async function recarregarGestor() {
+    estado.gestor = await chamar('abrirGestor', estado.gestor.obra.ID_Obra, auth());
+    desenharGestor();
+  }
+
+  // Problemas da obra: abertos primeiro (gravidade e tempo em aberto), com o plano de ação
+  function problemasGestor() {
+    const { problemas, podeDecidir, podeResolver } = estado.gestor;
+    const abertos = problemas.filter(p => p.Situacao !== 'Resolvido');
+    const resolvidos = problemas.filter(p => p.Situacao === 'Resolvido');
+    const conta = g => abertos.filter(p => p.Gravidade === g).length;
+    const vencidos = abertos.filter(p => p.PrazoVencido).length;
+    const semPlano = abertos.filter(p => !p.Acao).length;
+    return `<div class="cartao secao">
+      <h2>Problemas da obra (${abertos.length} aberto(s))</h2>
+      ${abertos.length ? `<div class="indicadores">
+        <div class="indicador ${conta('Alta') ? 'ruim' : ''}"><span>Gravidade alta</span><strong>${conta('Alta')}</strong></div>
+        <div class="indicador"><span>Média / baixa</span><strong>${conta('Média')} / ${conta('Baixa')}</strong></div>
+        <div class="indicador ${semPlano ? 'ruim' : ''}"><span>Sem plano de ação</span><strong>${semPlano}</strong></div>
+        <div class="indicador ${vencidos ? 'ruim' : ''}"><span>Prazo vencido</span><strong>${vencidos}</strong></div>
+      </div>
+      ${abertos.map(p => cartaoProblema(p, { podeDefinir: podeDecidir, podeResolver })).join('')}`
+      : '<p class="suave">Nenhum problema aberto nesta obra.</p>'}
+      ${resolvidos.length ? `<details><summary>Resolvidos (${resolvidos.length})</summary>${resolvidos.map(p => cartaoProblema(p)).join('')}</details>` : ''}
+    </div>`;
+  }
+
   function desenharGestor() {
-    const { obra, regra, regraAlterada, pedidos, aditivos, outras, podeDecidir } = estado.gestor;
+    const { obra, regra, regraAlterada, pedidos, aditivos, outras, podeDecidir, fisico } = estado.gestor;
+    estado.setorAberto = 'gestor';
     const descricao = !regra.exigir ? 'Hoje nenhuma compra precisa de aprovação do Gestor.'
       : Number(regra.valor) === 0 ? 'Hoje todas as compras precisam de aprovação do Gestor.'
       : `Hoje compras acima de ${dinheiro(regra.valor)} precisam de aprovação do Gestor.`;
@@ -2620,8 +2656,16 @@
           <h1>${esc(obra.Cliente)}</h1>
           <div class="etiquetas">${etiqueta(obra.Status)}${obra.Atrasada ? etiqueta('Atrasada') : ''}</div>
         </div>
+        ${fisico.temMedicao ? `<div class="cartao resumo-andamento">
+          <div class="suave">Andamento físico</div>
+          <div class="numero">${fisico.validado}%</div>
+          ${barraPercentual(fisico.validado, fisico.esperado !== '' && fisico.validado + 5 < fisico.esperado ? 'atrasado' : '')}
+          <div class="suave pequeno" style="margin-top:8px">${fisico.esperado !== '' ? 'Previsto hoje: ' + fisico.esperado + '%' : ''}</div>
+        </div>` : ''}
       </div>
       ${!podeDecidir ? `<div class="aviso info">Você está vendo a aba do Gestor apenas para consulta.</div>` : ''}
+
+      ${problemasGestor()}
 
       <div class="cartao secao tabela-rolavel">
         <h2>Compras aguardando aprovação (${pedidos.length})</h2>
@@ -2682,8 +2726,8 @@
     travarBotoes(true);
     try {
       await chamar(funcao, id, aprovar, auth());
+      await recarregarGestor();
       mostrarMensagem(aprovar ? 'Aprovado!' : 'Recusado.');
-      telaGestor(estado.gestor.obra.ID_Obra);
     } catch (erro) { mostrarErro(erro); travarBotoes(false); }
   }
 
@@ -2936,6 +2980,981 @@
       <p><button onclick="window.print()">Imprimir ou salvar em PDF</button></p>
       </body></html>`);
     janela.document.close();
+  }
+
+  /* =========================================================
+   * Ajudantes das telas de setor (Fiscal em diante)
+   * ========================================================= */
+  function cabecalhoSetor(obra, setor, lateral = '') {
+    return `<a class="link-voltar" onclick="irPara('#/obra/${obra.ID_Obra}')">← Voltar para a obra ${esc(obra.Codigo)}</a>
+      <div class="cabecalho-obra">
+        <div>
+          <div class="codigo">${esc(obra.Codigo)} · ${esc(setor.toUpperCase())}</div>
+          <h1>${esc(obra.Cliente)}</h1>
+          <div class="suave">${esc(obra.Endereco) || ''}</div>
+          <div class="etiquetas">${etiqueta(obra.Status)}${obra.Atrasada ? etiqueta('Atrasada') : ''}</div>
+        </div>
+        ${lateral}
+      </div>`;
+  }
+
+  // Executa uma gravação, recarrega a tela do setor e mostra a mensagem
+  async function acaoSetor(funcao, args, mensagem, recarregar) {
+    travarBotoes(true);
+    try {
+      const r = await chamar(funcao, ...args, auth());
+      await recarregar();
+      mostrarMensagem(typeof mensagem === 'function' ? mensagem(r) : mensagem);
+      return true;
+    } catch (erro) { mostrarErro(erro); travarBotoes(false); return false; }
+  }
+
+  function valorDe(id) { const el = document.getElementById(id); return el ? el.value.trim() : ''; }
+
+  async function lerArquivoDoCampo(id) {
+    const campo = document.getElementById(id);
+    return campo && campo.files[0] ? lerArquivo(campo.files[0]) : null;
+  }
+
+  function nomeMes(mes) {
+    const [a, m] = mes.split('-').map(Number);
+    return ['janeiro', 'fevereiro', 'março', 'abril', 'maio', 'junho', 'julho', 'agosto', 'setembro',
+      'outubro', 'novembro', 'dezembro'][m - 1] + ' de ' + a;
+  }
+
+  function mudarMes(mes, n) {
+    const [a, m] = mes.split('-').map(Number);
+    const d = new Date(a, m - 1 + n, 1);
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+  }
+
+  function barraPercentual(pct, classe = '') {
+    return `<div class="progresso ${classe}"><div style="width:${Math.max(0, Math.min(100, Number(pct) || 0))}%"></div></div>`;
+  }
+
+  function estrelas(nota) {
+    const n = Number(nota) || 0;
+    return n ? `<span class="estrelas" title="${n} de 5">${'★'.repeat(n)}${'☆'.repeat(5 - n)}</span>` : '—';
+  }
+
+  function linksFotos(texto) {
+    return String(texto || '').split('\n').filter(Boolean).map((u, i) => linkArquivo(u, 'Foto ' + (i + 1))).join(' ');
+  }
+
+  /* =========================================================
+   * TELA 12 – Setor Fiscal ("o celular no canteiro")
+   * Botões grandes para registrar o dia, o andamento, problemas e o
+   * checklist; calendário do diário e o que foi registrado por último.
+   * ========================================================= */
+  async function telaFiscal(idObra) {
+    carregando('Abrindo Fiscal…');
+    try {
+      estado.fis = await chamar('abrirFiscal', idObra, auth());
+      estado.fisPainel = null;
+      estado.fisMes = estado.fis.hoje.slice(0, 7);
+      desenharFiscal();
+    } catch (erro) { mostrarErro(erro); irPara('#/obra/' + idObra); }
+  }
+
+  async function recarregarFiscal() {
+    estado.fis = await chamar('abrirFiscal', estado.fis.obra.ID_Obra, auth());
+    estado.fisPainel = null;
+    desenharFiscal();
+  }
+
+  function abrirPainelFiscal(painel, dia) {
+    estado.fisPainel = painel;
+    estado.fisDia = dia || estado.fis.hoje;
+    desenharFiscal();
+    document.getElementById('painel-fiscal')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function desenharFiscal() {
+    const f = estado.fis;
+    const { obra, fisico, podeEditar, podeTratarProblema, podeConfirmarEntrega } = f;
+    estado.setorAberto = 'fiscal';
+    // Devolvidos que o Fiscal ainda não registrou de novo (as listas vêm do mais novo para o mais antigo)
+    const semNovo = lista => lista.filter((x, i) => x.Situacao === 'Devolvido' &&
+      !lista.slice(0, i).some(n => n.Etapa === x.Etapa && n.Situacao !== 'Devolvido')).length;
+    const devolvidos = f.diario.filter(d => d.Situacao === 'Devolvido').length + semNovo(f.medicoes) + semNovo(f.checklists);
+    const diarioHoje = f.diario.find(d => d.Data === f.hoje);
+    const botao = (painel, titulo, texto, extra = '') => `<button class="botao-grande" onclick="${painel}">
+      <strong>${titulo}</strong><span>${texto}</span>${extra}</button>`;
+
+    tela(`
+      ${cabecalhoSetor(obra, 'Fiscal', `<div class="cartao resumo-andamento">
+        <div class="suave">Andamento físico (validado)</div>
+        <div class="numero">${fisico.validado}%</div>
+        ${barraPercentual(fisico.validado)}
+        <div class="suave pequeno" style="margin-top:8px">Lançado: ${fisico.lancado}%${fisico.esperado !== '' ? ` · Previsto hoje: ${fisico.esperado}%` : ''}</div>
+      </div>`)}
+      ${!podeEditar ? `<div class="aviso info">Você está vendo o Fiscal apenas para consulta.</div>` : ''}
+      ${devolvidos && podeEditar ? `<div class="aviso erro">${devolvidos} registro(s) devolvido(s) pelo Coordenador. Veja o comentário em "Últimos registros" e registre de novo.</div>` : ''}
+
+      ${podeEditar || podeTratarProblema || podeConfirmarEntrega ? `<div class="botoes-grandes">
+        ${podeEditar ? botao("abrirPainelFiscal('diario')", 'Registrar o dia', diarioHoje ? 'Hoje já registrado · editar' : 'Clima, equipe, serviços e fotos') : ''}
+        ${podeEditar ? botao("abrirPainelFiscal('andamento')", 'Atualizar andamento', '% de cada etapa da obra') : ''}
+        ${podeTratarProblema ? botao("abrirPainelFiscal('problema')", 'Registrar problema', 'Algo que precisa de solução') : ''}
+        ${podeEditar ? botao("abrirPainelFiscal('checklist')", 'Checklist de qualidade', 'Conferir uma etapa') : ''}
+        ${podeConfirmarEntrega ? botao(`irPara('#/obra/${obra.ID_Obra}/expedicao')`, 'Confirmar material',
+          f.entregasNaRua ? f.entregasNaRua + ' entrega(s) a caminho' : 'Nenhuma entrega a caminho',
+          f.entregasNaRua ? `<span class="contador">${f.entregasNaRua}</span>` : '') : ''}
+      </div>` : ''}
+
+      <div id="painel-fiscal">${painelFiscal()}</div>
+
+      <div class="duas-colunas">
+        <div>
+          ${calendarioDiario()}
+          ${problemasFiscal()}
+        </div>
+        <div class="cartao secao">
+          <h2>Últimos registros</h2>
+          ${feedFiscal()}
+        </div>
+      </div>
+    `);
+  }
+
+  function painelFiscal() {
+    const p = estado.fisPainel;
+    if (!p) return '';
+    const fechar = `<button class="botao" onclick="estado.fisPainel=null; desenharFiscal()">Fechar</button>`;
+    const f = estado.fis;
+
+    if (p === 'diario') {
+      const d = f.diario.find(x => x.Data === estado.fisDia) || {};
+      const travado = d.Situacao === 'Validado';
+      const fotos = d.Fotos ? String(d.Fotos).split('\n').length : 0;
+      return `<div class="cartao secao destaque-acao">
+        <h2>Diário de ${diaSemana(estado.fisDia)}, ${dataBR(estado.fisDia)}</h2>
+        ${d.ID_Diario ? `<p class="suave pequeno">${travado ? 'Este dia já foi validado pelo Coordenador e não pode mais ser alterado.'
+          : 'Este dia já tem registro. Salvar de novo atualiza o registro e manda para validação.'}</p>` : ''}
+        ${d.Situacao === 'Devolvido' ? `<div class="aviso erro">Devolvido: ${esc(d.Comentario)}</div>` : ''}
+        <div class="campos">
+          <div class="campo"><label for="di-data">Dia</label><input id="di-data" type="date" max="${f.hoje}" value="${estado.fisDia}"
+            onchange="abrirPainelFiscal('diario', this.value)"></div>
+          <div class="campo"><label for="di-clima">Clima</label><select id="di-clima" ${travado ? 'disabled' : ''}>${f.climas.map(c =>
+            `<option ${c === d.Clima ? 'selected' : ''}>${c}</option>`).join('')}</select></div>
+          <div class="campo"><label for="di-pessoas">Pessoas na obra</label><input id="di-pessoas" type="number" min="0" inputmode="numeric"
+            value="${esc(d.Pessoas)}" ${travado ? 'disabled' : ''}></div>
+          <div class="campo largo"><label for="di-equipe">Equipe (quem estava)</label><input id="di-equipe" value="${esc(d.Equipe)}"
+            placeholder="Ex.: Empreiteira Silva – 2 pedreiros e 2 serventes; eletricista" ${travado ? 'disabled' : ''}></div>
+          <div class="campo largo"><label for="di-servicos">Serviços feitos</label><textarea id="di-servicos" ${travado ? 'disabled' : ''}
+            placeholder="Ex.: reboco da cozinha e contrapiso dos banheiros">${esc(d.Servicos)}</textarea></div>
+          <div class="campo largo"><label for="di-ocorrencias">Ocorrências</label><textarea id="di-ocorrencias" ${travado ? 'disabled' : ''}
+            placeholder="Ex.: faltou água à tarde; visita do cliente">${esc(d.Ocorrencias)}</textarea></div>
+          ${fotos ? `<div class="campo largo"><label>Fotos já enviadas</label><div>${linksFotos(d.Fotos)}</div></div>` : ''}
+          ${!travado && fotos < 4 ? `<div class="campo largo"><label for="di-fotos">Fotos (até ${4 - fotos})</label>
+            <input id="di-fotos" type="file" accept="image/*" multiple></div>` : ''}
+        </div>
+        <div class="acoes">${fechar}${travado ? '' : `<button class="botao primario" onclick="salvarDiarioTela()">Salvar o dia</button>`}</div>
+      </div>`;
+    }
+
+    if (p === 'andamento') {
+      const linhas = f.fisico.etapas.map((e, i) => `<div class="linha-andamento">
+        <div><strong>${esc(e.Etapa)}</strong> <span class="suave pequeno">peso ${e.Peso}%</span>
+          <div class="suave pequeno">Validado ${e.Validado}%${e.Esperado !== '' ? ' · previsto hoje ' + e.Esperado + '%' : ''}${e.Pendente ? ' · esperando validação' : ''}</div></div>
+        <input type="range" min="0" max="100" step="5" value="${e.Lancado}" id="an-${i}" data-original="${e.Lancado}"
+          oninput="document.getElementById('an-v-${i}').textContent=this.value+'%'">
+        <strong class="num" id="an-v-${i}">${e.Lancado}%</strong>
+      </div>`).join('');
+      return `<div class="cartao secao destaque-acao">
+        <h2>Atualizar andamento</h2>
+        <p class="suave pequeno">Arraste até o quanto cada etapa está pronta. O Coordenador valida antes de contar no % da obra.</p>
+        ${linhas}
+        <div class="campo largo" style="margin-top:12px"><label for="an-obs">Observação</label>
+          <input id="an-obs" placeholder="Obrigatória se alguma etapa diminuir"></div>
+        <div class="acoes">${fechar}<button class="botao primario" onclick="salvarAndamentoTela()">Enviar para validação</button></div>
+      </div>`;
+    }
+
+    if (p === 'problema') {
+      return `<div class="cartao secao destaque-acao">
+        <h2>Registrar problema</h2>
+        <div class="campos">
+          <div class="campo largo"><label for="pb-titulo">O que aconteceu (curto)</label><input id="pb-titulo" placeholder="Ex.: Infiltração na parede do banheiro"></div>
+          <div class="campo"><label for="pb-grav">Gravidade</label><select id="pb-grav">${f.gravidades.map(g =>
+            `<option ${g === 'Média' ? 'selected' : ''}>${g}</option>`).join('')}</select></div>
+          <div class="campo"><label for="pb-foto">Foto</label><input id="pb-foto" type="file" accept="image/*"></div>
+          <div class="campo largo"><label for="pb-desc">Detalhes</label><textarea id="pb-desc"></textarea></div>
+        </div>
+        <p class="suave pequeno">O problema vai para o Gestor, que define o que fazer, quem faz e até quando.</p>
+        <div class="acoes">${fechar}<button class="botao primario" onclick="salvarProblemaTela()">Registrar problema</button></div>
+      </div>`;
+    }
+
+    if (p === 'checklist') {
+      const etapa = estado.fisEtapaCheck || f.fisico.etapas.find(e => e.Lancado > 0 && e.Lancado < 100)?.Etapa || 'Fundação';
+      estado.fisEtapaCheck = etapa;
+      const itens = f.itensQualidade[etapa].map((item, i) => `<div class="linha-check">
+        <span>${esc(item)}</span>
+        <div class="opcoes-check">${['Conforme', 'Não conforme', 'Não se aplica'].map(op => `<label class="${classeStatus(op)}">
+          <input type="radio" name="ck-${i}" value="${op}"> ${op}</label>`).join('')}</div>
+      </div>`).join('');
+      return `<div class="cartao secao destaque-acao">
+        <h2>Checklist de qualidade</h2>
+        <div class="campo" style="max-width:280px"><label for="ck-etapa">Etapa</label>
+          <select id="ck-etapa" onchange="estado.fisEtapaCheck=this.value; desenharFiscal()">${Object.keys(f.itensQualidade).map(e =>
+            `<option ${e === etapa ? 'selected' : ''}>${e}</option>`).join('')}</select></div>
+        <div style="margin-top:12px">${itens}</div>
+        <div class="campo largo" style="margin-top:12px"><label for="ck-obs">Observação</label>
+          <textarea id="ck-obs" placeholder="Obrigatória se algum item estiver Não conforme"></textarea></div>
+        <div class="acoes">${fechar}<button class="botao primario" onclick="salvarChecklistTela()">Enviar para validação</button></div>
+      </div>`;
+    }
+    return '';
+  }
+
+  function calendarioDiario() {
+    const f = estado.fis;
+    const mes = estado.fisMes;
+    const [a, m] = mes.split('-').map(Number);
+    const primeiro = new Date(a, m - 1, 1).getDay();
+    const dias = new Date(a, m, 0).getDate();
+    const porDia = {};
+    f.diario.forEach(d => { porDia[d.Data] = d; });
+    let celulas = '<div class="dia-semana">D</div><div class="dia-semana">S</div><div class="dia-semana">T</div><div class="dia-semana">Q</div><div class="dia-semana">Q</div><div class="dia-semana">S</div><div class="dia-semana">S</div>';
+    for (let i = 0; i < primeiro; i++) celulas += '<div></div>';
+    for (let dia = 1; dia <= dias; dia++) {
+      const iso = mes + '-' + String(dia).padStart(2, '0');
+      const r = porDia[iso];
+      const futuro = iso > f.hoje;
+      const fds = [0, 6].includes(new Date(a, m - 1, dia).getDay());
+      const cls = ['dia', r ? classeStatus(r.Situacao) : '', futuro ? 'futuro' : '', fds ? 'fds' : '', iso === f.hoje ? 'hoje' : ''].join(' ');
+      const titulo = r ? `${r.Situacao}: ${r.Servicos}` : futuro ? '' : 'Sem registro';
+      const clicavel = !futuro && (r || f.podeEditar);
+      celulas += `<button class="${cls}" ${clicavel ? `onclick="abrirPainelFiscal('diario', '${iso}')"` : 'disabled'} title="${esc(titulo)}">${dia}</button>`;
+    }
+    return `<div class="cartao secao">
+      <div class="cabecalho-obra" style="margin-bottom:10px;align-items:center">
+        <h2 style="margin:0">Diário de obra</h2>
+        <div class="navegar-mes">
+          <button class="botao pequeno" onclick="estado.fisMes=mudarMes(estado.fisMes,-1); desenharFiscal()">‹</button>
+          <strong>${nomeMes(mes)}</strong>
+          <button class="botao pequeno" ${mes >= f.hoje.slice(0, 7) ? 'disabled' : ''} onclick="estado.fisMes=mudarMes(estado.fisMes,1); desenharFiscal()">›</button>
+        </div>
+      </div>
+      <div class="calendario">${celulas}</div>
+      <div class="legenda pequeno suave"><span class="ponto st-validado"></span>Validado <span class="ponto st-aguardando-validacao"></span>Esperando validação
+        <span class="ponto st-devolvido"></span>Devolvido</div>
+    </div>`;
+  }
+
+  function feedFiscal() {
+    const f = estado.fis;
+    const itens = [];
+    f.diario.forEach(d => itens.push({ data: d.Data, ordem: d.RegistradoEm, sit: d.Situacao, coment: d.Comentario,
+      titulo: `Diário de ${dataBR(d.Data)} · ${esc(d.Clima)}${d.Pessoas !== '' ? ' · ' + d.Pessoas + ' pessoas' : ''}`,
+      texto: esc(d.Servicos) + (d.Ocorrencias ? `<div class="pequeno"><strong>Ocorrências:</strong> ${esc(d.Ocorrencias)}</div>` : '') +
+        (d.Fotos ? `<div>${linksFotos(d.Fotos)}</div>` : '') }));
+    f.medicoes.forEach(m => itens.push({ data: m.Data, ordem: m.RegistradoEm, sit: m.Situacao, coment: m.Comentario,
+      titulo: `Andamento · ${esc(m.Etapa)} em ${m.Percentual}%`, texto: esc(m.Observacao) }));
+    f.checklists.forEach(c => {
+      const r = JSON.parse(c.Respostas || '{}');
+      const nc = Object.keys(r).filter(k => r[k] === 'Não conforme');
+      itens.push({ data: c.Data, ordem: c.RegistradoEm, sit: c.Situacao, coment: c.Comentario,
+        titulo: `Checklist · ${esc(c.Etapa)}`, texto: (nc.length ? `<span class="texto-erro">Não conforme: ${nc.map(esc).join(', ')}</span>` : 'Tudo conforme') +
+          (c.Observacao ? `<div class="pequeno">${esc(c.Observacao)}</div>` : '') });
+    });
+    itens.sort((x, y) => String(y.data).localeCompare(String(x.data)) || String(y.ordem).localeCompare(String(x.ordem)));
+    if (!itens.length) return '<p class="suave">Nada registrado ainda.</p>';
+    return `<ul class="feed">${itens.slice(0, 15).map(i => `<li>
+      <div class="cabecalho-feed"><strong>${i.titulo}</strong>${etiqueta(i.sit)}</div>
+      <div class="pequeno">${i.texto}</div>
+      ${i.coment ? `<div class="comentario-coord pequeno"><strong>Coordenador:</strong> ${esc(i.coment)}</div>` : ''}
+    </li>`).join('')}</ul>`;
+  }
+
+  function problemasFiscal() {
+    const { problemas, podeTratarProblema } = estado.fis;
+    const abertos = problemas.filter(p => p.Situacao !== 'Resolvido');
+    return `<div class="cartao secao">
+      <h2>Problemas abertos (${abertos.length})</h2>
+      ${abertos.length ? abertos.map(p => cartaoProblema(p, { podeResolver: podeTratarProblema })).join('')
+        : '<p class="suave">Nenhum problema aberto nesta obra.</p>'}
+    </div>`;
+  }
+
+  // Cartão de problema (usado no Fiscal e no Gestor)
+  function cartaoProblema(p, { podeResolver = false, podeDefinir = false } = {}) {
+    return `<div class="problema gravidade-${classeStatus(p.Gravidade)}">
+      <div class="cabecalho-feed">
+        <div><span class="codigo">${esc(p.Numero)}</span> <strong>${esc(p.Titulo)}</strong></div>
+        <div class="etiquetas">${etiqueta(p.Gravidade)}${etiqueta(p.Situacao)}</div>
+      </div>
+      <div class="suave pequeno">Aberto em ${dataBR(p.Data)} · ${p.Situacao === 'Resolvido' ? 'resolvido em ' + dataBR(p.ResolvidoEm) : 'há ' + p.DiasAberto + ' dia(s)'}</div>
+      ${p.Descricao ? `<div class="pequeno">${esc(p.Descricao)}</div>` : ''}
+      ${linkArquivo(p.Foto, 'Foto')}
+      ${p.Acao ? `<div class="plano-acao pequeno"><strong>Plano:</strong> ${esc(p.Acao)}<br>
+        <strong>Quem:</strong> ${esc(p.Responsavel)} · <strong>Até:</strong> <span class="${p.PrazoVencido ? 'texto-erro' : ''}">${dataBR(p.Prazo)}${p.PrazoVencido ? ' (vencido)' : ''}</span></div>`
+        : p.Situacao !== 'Resolvido' ? '<div class="pequeno texto-erro">Sem plano de ação ainda.</div>' : ''}
+      ${p.Solucao ? `<div class="pequeno"><strong>Solução:</strong> ${esc(p.Solucao)}</div>` : ''}
+      ${podeDefinir && p.Situacao !== 'Resolvido' ? `<details ${p.Acao ? '' : 'open'}><summary>${p.Acao ? 'Mudar o plano de ação' : 'Definir plano de ação'}</summary>
+        <div class="campos" style="margin-top:8px">
+          <div class="campo largo"><label>O que fazer</label><input id="pa-acao-${p.ID_Problema}" value="${esc(p.Acao)}"></div>
+          <div class="campo"><label>Quem faz</label><input id="pa-resp-${p.ID_Problema}" value="${esc(p.Responsavel)}"></div>
+          <div class="campo"><label>Até quando</label><input type="date" id="pa-prazo-${p.ID_Problema}" value="${esc(p.Prazo)}"></div>
+        </div>
+        <div class="acoes"><button class="botao primario pequeno" onclick="salvarPlanoAcao('${p.ID_Problema}')">Salvar plano</button></div>
+      </details>` : ''}
+      ${podeResolver && p.Situacao !== 'Resolvido' ? `<div class="resolver-linha">
+        <input id="pb-sol-${p.ID_Problema}" placeholder="Como foi resolvido?">
+        <button class="botao sucesso pequeno" onclick="resolverProblemaTela('${p.ID_Problema}')">Marcar resolvido</button></div>` : ''}
+    </div>`;
+  }
+
+  async function salvarDiarioTela() {
+    const campo = document.getElementById('di-fotos');
+    const arquivos = campo ? Array.from(campo.files) : [];
+    travarBotoes(true);
+    try {
+      const fotos = [];
+      for (const a of arquivos) fotos.push(await lerArquivo(a));
+      await chamar('salvarDiario', estado.fis.obra.ID_Obra, {
+        Data: valorDe('di-data'), Clima: valorDe('di-clima'), Pessoas: valorDe('di-pessoas'), Equipe: valorDe('di-equipe'),
+        Servicos: valorDe('di-servicos'), Ocorrencias: valorDe('di-ocorrencias')
+      }, fotos, auth());
+      await recarregarFiscal();
+      mostrarMensagem('Diário salvo! Foi para validação do Coordenador.');
+    } catch (erro) { mostrarErro(erro); travarBotoes(false); }
+  }
+
+  function salvarAndamentoTela() {
+    const lista = estado.fis.fisico.etapas.map((e, i) => {
+      const el = document.getElementById('an-' + i);
+      return el.value !== el.dataset.original ? { Etapa: e.Etapa, Percentual: Number(el.value) } : null;
+    }).filter(Boolean);
+    if (!lista.length) return mostrarMensagem('Nenhuma etapa foi alterada.', 'erro');
+    acaoSetor('registrarAndamento', [estado.fis.obra.ID_Obra, lista, valorDe('an-obs')],
+      'Andamento enviado para validação do Coordenador.', recarregarFiscal);
+  }
+
+  async function salvarProblemaTela() {
+    if (!valorDe('pb-titulo')) return mostrarMensagem('Escreva o que aconteceu.', 'erro');
+    travarBotoes(true);
+    try {
+      const foto = await lerArquivoDoCampo('pb-foto');
+      const numero = await chamar('registrarProblema', estado.fis.obra.ID_Obra,
+        { Titulo: valorDe('pb-titulo'), Gravidade: valorDe('pb-grav'), Descricao: valorDe('pb-desc') }, foto, auth());
+      await recarregarFiscal();
+      mostrarMensagem(`Problema ${numero} registrado. O Gestor vai definir o plano de ação.`);
+    } catch (erro) { mostrarErro(erro); travarBotoes(false); }
+  }
+
+  function salvarChecklistTela() {
+    const etapa = estado.fisEtapaCheck;
+    const respostas = {};
+    estado.fis.itensQualidade[etapa].forEach((item, i) => {
+      const marcado = document.querySelector(`input[name="ck-${i}"]:checked`);
+      if (marcado) respostas[item] = marcado.value;
+    });
+    acaoSetor('salvarChecklist', [estado.fis.obra.ID_Obra, etapa, respostas, valorDe('ck-obs')],
+      'Checklist enviado para validação do Coordenador.', recarregarFiscal);
+  }
+
+  // Usado no Fiscal e no Gestor: recarrega a tela que estiver aberta
+  function recarregarTelaAtual() {
+    return estado.setorAberto === 'gestor' ? recarregarGestor() : recarregarFiscal();
+  }
+
+  function resolverProblemaTela(id) {
+    const solucao = valorDe('pb-sol-' + id);
+    if (!solucao) return mostrarMensagem('Conte como o problema foi resolvido.', 'erro');
+    acaoSetor('resolverProblema', [id, solucao], 'Problema marcado como resolvido.', recarregarTelaAtual);
+  }
+
+  function salvarPlanoAcao(id) {
+    acaoSetor('definirAcaoProblema', [id, { Acao: valorDe('pa-acao-' + id), Responsavel: valorDe('pa-resp-' + id), Prazo: valorDe('pa-prazo-' + id) }],
+      'Plano de ação salvo. O problema está em correção.', recarregarTelaAtual);
+  }
+
+  /* =========================================================
+   * TELA 13 – Setor Coordenador ("a caixa de entrada")
+   * Cada registro do Fiscal chega como um cartão: Validar ou Devolver
+   * com comentário. Também reprograma o cronograma, com justificativa.
+   * ========================================================= */
+  async function telaCoordenador(idObra) {
+    carregando('Abrindo Coordenador…');
+    try {
+      estado.coord = await chamar('abrirCoordenador', idObra, auth());
+      estado.coordReprog = null;
+      desenharCoordenador();
+    } catch (erro) { mostrarErro(erro); irPara('#/obra/' + idObra); }
+  }
+
+  async function recarregarCoordenador() {
+    estado.coord = await chamar('abrirCoordenador', estado.coord.obra.ID_Obra, auth());
+    estado.coordReprog = null;
+    desenharCoordenador();
+  }
+
+  function desenharCoordenador() {
+    const c = estado.coord;
+    const { obra, caixa, fisico, podeValidar } = c;
+    tela(`
+      ${cabecalhoSetor(obra, 'Coordenador', `<div class="cartao resumo-andamento">
+        <div class="suave">Esperando validação</div>
+        <div class="numero">${caixa.length}</div>
+        <div class="suave pequeno">Físico validado: ${fisico.validado}%${fisico.esperado !== '' ? ' · previsto hoje ' + fisico.esperado + '%' : ''}</div>
+      </div>`)}
+      ${!podeValidar ? `<div class="aviso info">Você está vendo o Coordenador apenas para consulta.</div>` : ''}
+
+      <h2>Caixa de entrada (${caixa.length})</h2>
+      ${caixa.length ? caixa.map(cartaoValidacao).join('') : '<div class="cartao secao"><p class="suave">Nada esperando validação nesta obra.</p></div>'}
+
+      ${tabelaAndamentoCoord()}
+
+      ${c.problemasAbertos.length ? `<div class="cartao secao">
+        <h2>Problemas abertos (${c.problemasAbertos.length})</h2>
+        <ul class="lista-simples">${c.problemasAbertos.map(p => `<li>${etiqueta(p.Gravidade)} <strong>${esc(p.Titulo)}</strong>
+          · ${esc(p.Situacao)} · há ${p.DiasAberto} dia(s)</li>`).join('')}</ul>
+        <p class="suave pequeno">O plano de ação de cada problema é definido na aba do <a class="link-tabela" onclick="irPara('#/obra/${obra.ID_Obra}/gestor')">Gestor</a>.</p>
+      </div>` : ''}
+
+      ${c.historico.length ? `<div class="cartao secao tabela-rolavel">
+        <h2>Analisados recentemente</h2>
+        <table class="tabela"><thead><tr><th>Registro</th><th>Data</th><th>Situação</th><th>Comentário</th></tr></thead>
+        <tbody>${c.historico.map(h => `<tr><td>${tituloRegistro(h)}</td><td class="num">${dataBR(h.Data)}</td>
+          <td>${etiqueta(h.Situacao)}</td><td class="pequeno">${esc(h.Comentario) || '—'}</td></tr>`).join('')}</tbody></table>
+      </div>` : ''}
+
+      ${c.outras.length ? `<div class="cartao secao">
+        <h2>Outras obras com validações pendentes</h2>
+        <ul class="lista-simples">${c.outras.map(o => `<li><a class="link-tabela" onclick="irPara('#/obra/${o.ID_Obra}/coordenador')">${esc(o.Codigo)}</a>
+          · ${esc(o.Cliente)} · ${o.Quantidade} pendente(s)</li>`).join('')}</ul>
+      </div>` : ''}
+    `);
+  }
+
+  function tituloRegistro(r) {
+    if (r.Tipo === 'diario') return `Diário · ${esc(r.Clima)}`;
+    if (r.Tipo === 'medicao') return `Andamento · ${esc(r.Etapa)} em ${r.Percentual}%`;
+    return `Checklist · ${esc(r.Etapa)}`;
+  }
+
+  function cartaoValidacao(r) {
+    const { fisico, podeValidar } = estado.coord;
+    let corpo = '';
+    if (r.Tipo === 'diario') {
+      corpo = `<dl class="det-registro">
+        <dt>Clima</dt><dd>${esc(r.Clima)}</dd>
+        <dt>Equipe</dt><dd>${esc(r.Equipe) || '—'}${r.Pessoas !== '' ? ` (${r.Pessoas} pessoas)` : ''}</dd>
+        <dt>Serviços</dt><dd>${esc(r.Servicos) || '—'}</dd>
+        ${r.Ocorrencias ? `<dt>Ocorrências</dt><dd>${esc(r.Ocorrencias)}</dd>` : ''}
+        ${r.Fotos ? `<dt>Fotos</dt><dd>${linksFotos(r.Fotos)}</dd>` : ''}</dl>`;
+    } else if (r.Tipo === 'medicao') {
+      const e = fisico.etapas.find(x => x.Etapa === r.Etapa) || {};
+      corpo = `<div class="medicao-de-para"><span>${e.Validado}%</span> → <strong>${r.Percentual}%</strong>
+        ${e.Esperado !== '' && e.Esperado !== undefined ? `<span class="suave pequeno">previsto hoje: ${e.Esperado}%</span>` : ''}</div>
+        ${barraPercentual(r.Percentual)}
+        ${r.Observacao ? `<p class="pequeno">${esc(r.Observacao)}</p>` : ''}`;
+    } else {
+      const resp = JSON.parse(r.Respostas || '{}');
+      corpo = `<ul class="lista-check-validar">${Object.keys(resp).map(k => `<li>${etiqueta(resp[k])} ${esc(k)}</li>`).join('')}</ul>
+        ${r.Observacao ? `<p class="pequeno"><strong>Observação:</strong> ${esc(r.Observacao)}</p>` : ''}`;
+    }
+    return `<div class="cartao secao cartao-validacao">
+      <div class="cabecalho-feed"><div><span class="rotulo-pequeno">${{ diario: 'Diário de obra', medicao: 'Andamento', checklist: 'Checklist de qualidade' }[r.Tipo]}</span>
+        <h3>${r.Tipo === 'diario' ? `${diaSemana(r.Data)}, ${dataBR(r.Data)}` : esc(r.Etapa)}</h3></div>
+        <span class="suave pequeno">por ${esc(r.RegistradoPor)} em ${dataBR(r.RegistradoEm)}</span></div>
+      ${corpo}
+      ${podeValidar ? `<div class="resolver-linha">
+        <input id="cm-${r.ID}" placeholder="Comentário (obrigatório para devolver)">
+        <button class="botao pequeno" onclick="validarTela('${r.Tipo}', '${r.ID}', false)">Devolver</button>
+        <button class="botao sucesso pequeno" onclick="validarTela('${r.Tipo}', '${r.ID}', true)">Validar</button></div>` : ''}
+    </div>`;
+  }
+
+  function validarTela(tipo, id, aprovar) {
+    const comentario = valorDe('cm-' + id);
+    if (!aprovar && !comentario) return mostrarMensagem('Escreva o motivo da devolução para o Fiscal.', 'erro');
+    acaoSetor('validarRegistro', [tipo, id, aprovar, comentario], aprovar ? 'Validado!' : 'Devolvido para o Fiscal.', recarregarCoordenador);
+  }
+
+  function tabelaAndamentoCoord() {
+    const { fisico, podeValidar, cronogramaSalvo, reprogramacoes } = estado.coord;
+    const linhas = fisico.etapas.map(e => {
+      const atrasada = e.Esperado !== '' && e.Validado + 10 < e.Esperado;
+      const editando = estado.coordReprog === e.Etapa;
+      return `<tr>
+        <td><strong>${esc(e.Etapa)}</strong><div class="suave pequeno">peso ${e.Peso}%</div></td>
+        <td style="min-width:140px">${barraPercentual(e.Validado, atrasada ? 'atrasado' : '')}<div class="pequeno">${e.Validado}% validado${e.Pendente ? ' · <em>tem lançamento esperando</em>' : ''}</div></td>
+        <td class="num ${atrasada ? 'texto-erro' : ''}">${e.Esperado === '' ? '—' : e.Esperado + '%'}</td>
+        <td class="num">${dataBR(e.InicioPrevisto)} a ${dataBR(e.FimPrevisto)}</td>
+        <td>${podeValidar && cronogramaSalvo && !editando ? `<button class="botao pequeno" onclick="estado.coordReprog='${e.Etapa}'; desenharCoordenador()">Reprogramar</button>` : ''}</td>
+      </tr>${editando ? `<tr class="linha-detalhe"><td colspan="5">
+        <div class="campos">
+          <div class="campo"><label for="rp-ini">Novo início</label><input id="rp-ini" type="date" value="${esc(e.InicioPrevisto)}"></div>
+          <div class="campo"><label for="rp-fim">Novo fim</label><input id="rp-fim" type="date" value="${esc(e.FimPrevisto)}"></div>
+          <div class="campo largo"><label for="rp-just">Justificativa</label><input id="rp-just" placeholder="Ex.: chuvas de 5 dias seguidos atrasaram a cobertura"></div>
+        </div>
+        <div class="acoes"><button class="botao" onclick="estado.coordReprog=null; desenharCoordenador()">Cancelar</button>
+          <button class="botao primario" onclick="reprogramarTela('${e.Etapa}')">Salvar nova data</button></div>
+      </td></tr>` : ''}`;
+    }).join('');
+    return `<div class="cartao secao tabela-rolavel">
+      <h2>Andamento por etapa</h2>
+      ${!cronogramaSalvo ? '<p class="aviso">O cronograma ainda não foi salvo pela Engenharia, por isso não dá para reprogramar.</p>' : ''}
+      <table class="tabela"><thead><tr><th>Etapa</th><th>Validado</th><th>Previsto hoje</th><th>Período</th><th></th></tr></thead>
+      <tbody>${linhas}</tbody></table>
+      ${reprogramacoes.length ? `<h3 class="subtitulo">Reprogramações</h3>
+        <table class="tabela"><thead><tr><th>Etapa</th><th>Antes</th><th>Depois</th><th>Justificativa</th><th>Por</th></tr></thead>
+        <tbody>${reprogramacoes.map(r => `<tr><td>${esc(r.Etapa)}</td><td class="num">${dataBR(r.InicioAntes)} a ${dataBR(r.FimAntes)}</td>
+          <td class="num">${dataBR(r.InicioNovo)} a ${dataBR(r.FimNovo)}</td><td class="pequeno">${esc(r.Justificativa)}</td>
+          <td class="pequeno">${esc(r.Por)}<br>${dataBR(r.Em)}</td></tr>`).join('')}</tbody></table>` : ''}
+    </div>`;
+  }
+
+  function reprogramarTela(etapa) {
+    acaoSetor('reprogramarCronograma', [estado.coord.obra.ID_Obra, etapa, valorDe('rp-ini'), valorDe('rp-fim'), valorDe('rp-just')],
+      'Cronograma reprogramado.', recarregarCoordenador);
+  }
+
+  /* =========================================================
+   * TELA 14 – Setor Financeiro ("o extrato")
+   * A receber (parcelas do cliente), A pagar (pedidos de Compras e
+   * contas lançadas) e Previsto x realizado por etapa física.
+   * ========================================================= */
+  async function telaFinanceiro(idObra) {
+    carregando('Abrindo Financeiro…');
+    try {
+      estado.fin = await chamar('abrirFinanceiro', idObra, auth());
+      estado.finAba = 'receber';
+      estado.finForm = null;
+      estado.finFiltro = 'todas';
+      desenharFinanceiro();
+    } catch (erro) { mostrarErro(erro); irPara('#/obra/' + idObra); }
+  }
+
+  async function recarregarFinanceiro() {
+    estado.fin = await chamar('abrirFinanceiro', estado.fin.obra.ID_Obra, auth());
+    estado.finForm = null;
+    desenharFinanceiro();
+  }
+
+  function trocarAbaFin(aba) { estado.finAba = aba; estado.finForm = null; desenharFinanceiro(); }
+
+  function desenharFinanceiro() {
+    const { obra, totais, podeEditar } = estado.fin;
+    const pct = totais.receber ? Math.round(totais.recebido / totais.receber * 100) : 0;
+    const aba = (id, nome) => `<button class="aba-interna ${estado.finAba === id ? 'ativa' : ''}" onclick="trocarAbaFin('${id}')">${nome}</button>`;
+    tela(`
+      ${cabecalhoSetor(obra, 'Financeiro', `<div class="cartao resumo-andamento">
+        <div class="suave">Recebido do cliente</div>
+        <div class="numero">${pct}%</div>
+        ${barraPercentual(pct)}
+        <div class="suave pequeno" style="margin-top:8px">${dinheiro(totais.recebido)} de ${dinheiro(totais.receber)}</div>
+      </div>`)}
+      ${!podeEditar ? `<div class="aviso info">Você está vendo o Financeiro apenas para consulta.</div>` : ''}
+      <div class="indicadores">
+        <div class="indicador"><span>A receber em aberto</span><strong>${dinheiro(totais.receber - totais.recebido)}</strong></div>
+        <div class="indicador ${totais.atrasadoReceber ? 'ruim' : ''}"><span>Recebimentos atrasados</span><strong>${dinheiro(totais.atrasadoReceber)}</strong></div>
+        <div class="indicador"><span>A pagar em aberto</span><strong>${dinheiro(totais.pagar - totais.pago)}</strong></div>
+        <div class="indicador ${totais.atrasadoPagar ? 'ruim' : ''}"><span>Pagamentos atrasados</span><strong>${dinheiro(totais.atrasadoPagar)}</strong></div>
+      </div>
+      <div class="abas-internas">${aba('receber', 'A receber')}${aba('pagar', 'A pagar')}${aba('comparar', 'Previsto x realizado')}</div>
+      ${estado.finAba === 'receber' ? finReceber() : estado.finAba === 'pagar' ? finPagar() : finComparar()}
+    `);
+  }
+
+  function finReceber() {
+    const { parcelas, venda, aditivosAprovados, podeEditar, hoje } = estado.fin;
+    const resumoVenda = `${esc(venda.FormaPagamento) || 'Forma de pagamento não informada'} · ${dinheiro(venda.ValorFechado)}` +
+      (venda.Entrada ? ` · entrada ${dinheiro(venda.Entrada)}` : '') +
+      (venda.FormaPagamento === 'Parcelado direto' && venda.QtdParcelas ? ` · ${venda.QtdParcelas}x de ${dinheiro(venda.ValorParcela)}` : '') +
+      (venda.FormaPagamento === 'Financiamento' && venda.Banco ? ` · ${esc(venda.Banco)}` : '');
+    if (!parcelas.length) {
+      return `<div class="cartao secao">
+        <h2>Parcelas do cliente</h2>
+        <p>Venda: <strong>${resumoVenda}</strong></p>
+        ${podeEditar ? `<p class="suave pequeno">As parcelas são criadas a partir do que o Comercial informou. A entrada vence na assinatura do contrato.</p>
+          <div class="regra-aprovacao">
+            <div class="campo"><label for="fp-venc">${venda.FormaPagamento === 'Financiamento' ? 'Previsão do repasse do banco' : 'Vencimento da 1ª parcela'}</label>
+              <input id="fp-venc" type="date" value="${somarDias(hoje, 30)}"></div>
+            <button class="botao primario" onclick="gerarParcelasTela()">Gerar parcelas</button>
+          </div>` : '<p class="suave">As parcelas ainda não foram geradas.</p>'}
+      </div>`;
+    }
+    const linhas = parcelas.map(p => {
+      const recebendo = estado.finForm === 'rec-' + p.ID_Parcela;
+      return `<tr class="${p.Situacao === 'Atrasado' ? 'linha-atrasada' : ''}">
+        <td class="num"><strong>${esc(p.Numero)}</strong></td>
+        <td>${esc(p.Descricao)}</td>
+        <td class="num">${dataBR(p.Vencimento)}</td>
+        <td class="num">${dinheiro(p.Valor)}</td>
+        <td>${etiqueta(p.Situacao)}${p.DataPagamento ? `<div class="suave pequeno">${dataBR(p.DataPagamento)} · ${dinheiro(p.ValorPago)}</div>` : ''}</td>
+        <td>${linkArquivo(p.Comprovante, 'Comprovante')}</td>
+        <td>${podeEditar ? (p.DataPagamento
+          ? `<button class="botao pequeno" onclick="desfazerTela('parcela', '${p.ID_Parcela}')">Desfazer</button>`
+          : `<div class="acoes-linha"><button class="botao pequeno sucesso" onclick="estado.finForm='rec-${p.ID_Parcela}'; desenharFinanceiro()">Receber</button>
+             ${p.Numero === 'Avulsa' ? `<button class="botao pequeno perigo" onclick="removerParcelaTela('${p.ID_Parcela}')">Remover</button>` : ''}</div>`) : ''}</td>
+      </tr>${recebendo ? `<tr class="linha-detalhe"><td colspan="7">
+        <div class="regra-aprovacao">
+          <div class="campo"><label for="rc-data">Recebido em</label><input id="rc-data" type="date" max="${hoje}" value="${hoje}"></div>
+          <div class="campo"><label for="rc-valor">Valor recebido</label><input id="rc-valor" type="number" step="0.01" min="0" value="${p.Valor}"></div>
+          <div class="campo"><label for="rc-comp">Comprovante</label><input id="rc-comp" type="file" accept="image/*,application/pdf"></div>
+          <button class="botao" onclick="estado.finForm=null; desenharFinanceiro()">Cancelar</button>
+          <button class="botao sucesso" onclick="receberTela('${p.ID_Parcela}')">Confirmar recebimento</button>
+        </div></td></tr>` : ''}`;
+    }).join('');
+    const sugestoes = aditivosAprovados.filter(a => !parcelas.some(p => p.Descricao.includes('Aditivo ' + a.Numero)));
+    return `<div class="cartao secao tabela-rolavel">
+      <div class="cabecalho-obra" style="margin-bottom:8px;align-items:center">
+        <div><h2 style="margin:0">Parcelas do cliente</h2><div class="suave pequeno">${resumoVenda}</div></div>
+        ${podeEditar && estado.finForm !== 'avulsa' ? `<button class="botao" onclick="estado.finForm='avulsa'; desenharFinanceiro()">+ Parcela avulsa</button>` : ''}
+      </div>
+      ${podeEditar && sugestoes.length ? `<div class="aviso info">${sugestoes.map(a => `Aditivo ${esc(a.Numero)} aprovado (${dinheiro(a.Valor)}) ainda não foi cobrado.
+        <button class="botao pequeno" onclick="estado.finForm='avulsa'; estado.finSugestao=${esc(JSON.stringify({ d: 'Aditivo ' + a.Numero + ' – ' + a.Descricao, v: a.Valor }))}; desenharFinanceiro()">Lançar</button>`).join('<br>')}</div>` : ''}
+      ${estado.finForm === 'avulsa' ? formParcelaAvulsa() : ''}
+      <table class="tabela"><thead><tr><th>Nº</th><th>Descrição</th><th>Vencimento</th><th>Valor</th><th>Situação</th><th></th><th></th></tr></thead>
+      <tbody>${linhas}</tbody></table>
+    </div>`;
+  }
+
+  function formParcelaAvulsa() {
+    const s = estado.finSugestao || {};
+    estado.finSugestao = null;
+    return `<div class="form-inline">
+      <strong>Nova parcela avulsa</strong>
+      <div class="campos" style="margin-top:8px">
+        <div class="campo largo"><label for="pa-desc">Descrição</label><input id="pa-desc" value="${esc(s.d || '')}" placeholder="Ex.: Aditivo 01 – churrasqueira"></div>
+        <div class="campo"><label for="pa-venc">Vencimento</label><input id="pa-venc" type="date" value="${somarDias(estado.fin.hoje, 30)}"></div>
+        <div class="campo"><label for="pa-valor">Valor</label><input id="pa-valor" type="number" step="0.01" min="0" value="${esc(s.v || '')}"></div>
+      </div>
+      <div class="acoes"><button class="botao" onclick="estado.finForm=null; desenharFinanceiro()">Cancelar</button>
+        <button class="botao primario" onclick="salvarParcelaTela()">Salvar parcela</button></div>
+    </div>`;
+  }
+
+  function finPagar() {
+    const { contas, podeEditar, hoje, categorias, etapasFisicas } = estado.fin;
+    const filtros = { todas: () => true, aberto: c => !c.DataPagamento, atrasadas: c => c.Situacao === 'Atrasado', pagas: c => !!c.DataPagamento };
+    const lista = contas.filter(filtros[estado.finFiltro]);
+    const chip = (id, nome) => `<button class="filtro ${estado.finFiltro === id ? 'ativo' : ''}" onclick="estado.finFiltro='${id}'; desenharFinanceiro()">${nome} (${contas.filter(filtros[id]).length})</button>`;
+    const linhas = lista.map(c => {
+      const chave = c.ID_Conta || c.ID_Pedido;
+      const pagando = estado.finForm === 'pag-' + chave;
+      return `<tr class="${c.Situacao === 'Atrasado' ? 'linha-atrasada' : ''}">
+        <td><strong>${esc(c.Descricao)}</strong><div class="suave pequeno">${esc(c.Fornecedor) || '—'}${c.Pagamento ? ' · ' + esc(c.Pagamento) : ''}</div>
+          ${c.NumeroNF ? `<div class="pequeno">NF ${esc(c.NumeroNF)} ${linkArquivo(c.ArquivoNF, 'ver')}</div>` : ''}</td>
+        <td>${esc(c.Categoria)}</td>
+        <td>${esc(c.Etapa) || '—'}</td>
+        <td class="num">${dataBR(c.Vencimento)}</td>
+        <td class="num">${dinheiro(c.Valor)}</td>
+        <td>${etiqueta(c.Situacao)}${c.DataPagamento ? `<div class="suave pequeno">${dataBR(c.DataPagamento)}</div>` : ''} ${linkArquivo(c.Comprovante, 'Comprovante')}</td>
+        <td>${podeEditar ? (c.DataPagamento
+          ? `<button class="botao pequeno" onclick="desfazerTela('conta', '${c.ID_Conta}')">Desfazer</button>`
+          : `<div class="acoes-linha"><button class="botao pequeno sucesso" onclick="estado.finForm='pag-${chave}'; desenharFinanceiro()">Pagar</button>
+             ${!c.ID_Pedido ? `<button class="botao pequeno perigo" onclick="removerContaTela('${c.ID_Conta}')">Remover</button>` : ''}</div>`) : ''}</td>
+      </tr>${pagando ? `<tr class="linha-detalhe"><td colspan="7">
+        <div class="regra-aprovacao">
+          <div class="campo"><label for="pg-data">Pago em</label><input id="pg-data" type="date" max="${hoje}" value="${hoje}"></div>
+          <div class="campo"><label for="pg-comp">Comprovante</label><input id="pg-comp" type="file" accept="image/*,application/pdf"></div>
+          <button class="botao" onclick="estado.finForm=null; desenharFinanceiro()">Cancelar</button>
+          <button class="botao sucesso" onclick="pagarTela(${esc(JSON.stringify(c.ID_Pedido && !c.ID_Conta ? { ID_Pedido: c.ID_Pedido } : { ID_Conta: c.ID_Conta }))})">Confirmar pagamento</button>
+        </div></td></tr>` : ''}`;
+    }).join('');
+    return `<div class="cartao secao tabela-rolavel">
+      <div class="cabecalho-obra" style="margin-bottom:8px;align-items:center">
+        <div><h2 style="margin:0">Contas a pagar</h2>
+          <div class="suave pequeno">Os pedidos aprovados em Compras entram aqui sozinhos. Mão de obra e outras despesas são lançadas à mão.</div></div>
+        ${podeEditar && estado.finForm !== 'conta' ? `<button class="botao" onclick="estado.finForm='conta'; desenharFinanceiro()">+ Nova conta</button>` : ''}
+      </div>
+      ${estado.finForm === 'conta' ? `<div class="form-inline">
+        <strong>Nova conta a pagar</strong>
+        <div class="campos" style="margin-top:8px">
+          <div class="campo largo"><label for="ct-desc">Descrição</label><input id="ct-desc" placeholder="Ex.: Mão de obra – Alvenaria (medição 2)"></div>
+          <div class="campo"><label for="ct-forn">Fornecedor / prestador</label><input id="ct-forn"></div>
+          <div class="campo"><label for="ct-cat">Categoria</label><select id="ct-cat">${categorias.map(x => `<option ${x === 'Mão de obra' ? 'selected' : ''}>${x}</option>`).join('')}</select></div>
+          <div class="campo"><label for="ct-etapa">Etapa da obra</label><select id="ct-etapa"><option value="">—</option>${etapasFisicas.map(x => `<option>${x}</option>`).join('')}</select></div>
+          <div class="campo"><label for="ct-venc">Vencimento</label><input id="ct-venc" type="date" value="${hoje}"></div>
+          <div class="campo"><label for="ct-valor">Valor</label><input id="ct-valor" type="number" step="0.01" min="0"></div>
+        </div>
+        <div class="acoes"><button class="botao" onclick="estado.finForm=null; desenharFinanceiro()">Cancelar</button>
+          <button class="botao primario" onclick="salvarContaTela()">Salvar conta</button></div>
+      </div>` : ''}
+      <div class="filtros" style="margin-bottom:10px">${chip('todas', 'Todas')}${chip('aberto', 'Em aberto')}${chip('atrasadas', 'Atrasadas')}${chip('pagas', 'Pagas')}</div>
+      ${lista.length ? `<table class="tabela"><thead><tr><th>Conta</th><th>Categoria</th><th>Etapa</th><th>Vencimento</th><th>Valor</th><th>Situação</th><th></th></tr></thead>
+        <tbody>${linhas}</tbody></table>` : '<p class="suave">Nenhuma conta neste filtro.</p>'}
+    </div>`;
+  }
+
+  function finComparar() {
+    const { porEtapa, totais } = estado.fin;
+    const maior = Math.max(1, ...porEtapa.map(e => Math.max(e.Previsto, e.Comprometido)));
+    const linhas = porEtapa.map(e => {
+      const estourou = e.Previsto && e.Comprometido > e.Previsto;
+      return `<div class="linha-comparacao">
+        <div><strong>${esc(e.Etapa)}</strong>${estourou ? ` <span class="etiqueta st-atrasado">${Math.round((e.Comprometido / e.Previsto - 1) * 100)}% acima</span>` : ''}</div>
+        <div class="barras">
+          <div class="barra-cmp previsto" style="width:${e.Previsto / maior * 100}%"></div>
+          <div class="barra-cmp comprometido ${estourou ? 'estourou' : ''}" style="width:${e.Comprometido / maior * 100}%"><div class="pago" style="width:${e.Comprometido ? e.Pago / e.Comprometido * 100 : 0}%"></div></div>
+        </div>
+        <div class="num pequeno">${dinheiro(e.Previsto)}<br><strong>${dinheiro(e.Comprometido)}</strong></div>
+      </div>`;
+    }).join('');
+    return `<div class="cartao secao">
+      <h2>Previsto x realizado por etapa</h2>
+      <p class="suave pequeno">Previsto = orçamento de materiais + mão de obra da Engenharia. Realizado = contas da etapa (a parte escura já foi paga).</p>
+      <div class="legenda pequeno suave" style="margin-bottom:12px"><span class="ponto previsto"></span>Previsto <span class="ponto comprometido"></span>Contas lançadas
+        <span class="ponto pago"></span>Já pago</div>
+      ${totais.previsto ? linhas : '<p class="aviso">A Engenharia ainda não preencheu o orçamento por etapa.</p>'}
+      <div class="totais-comparacao"><span>Previsto: <strong>${dinheiro(totais.previsto)}</strong></span>
+        <span>Lançado: <strong>${dinheiro(totais.pagar)}</strong></span><span>Pago: <strong>${dinheiro(totais.pago)}</strong></span>
+        ${totais.previsto ? `<span>Uso do orçamento: <strong class="${totais.pagar > totais.previsto ? 'texto-erro' : ''}">${Math.round(totais.pagar / totais.previsto * 100)}%</strong></span>` : ''}</div>
+    </div>`;
+  }
+
+  function gerarParcelasTela() {
+    if (!valorDe('fp-venc')) return mostrarMensagem('Informe a data.', 'erro');
+    acaoSetor('gerarParcelas', [estado.fin.obra.ID_Obra, valorDe('fp-venc')], n => `${n} parcela(s) criada(s).`, recarregarFinanceiro);
+  }
+
+  function salvarParcelaTela() {
+    acaoSetor('salvarParcela', [estado.fin.obra.ID_Obra, { Descricao: valorDe('pa-desc'), Vencimento: valorDe('pa-venc'), Valor: valorDe('pa-valor') }],
+      'Parcela lançada.', recarregarFinanceiro);
+  }
+
+  function removerParcelaTela(id) {
+    if (!confirm('Remover esta parcela?')) return;
+    acaoSetor('removerParcela', [id], 'Parcela removida.', recarregarFinanceiro);
+  }
+
+  async function receberTela(id) {
+    travarBotoes(true);
+    try {
+      const comp = await lerArquivoDoCampo('rc-comp');
+      await chamar('registrarRecebimento', id, valorDe('rc-data'), valorDe('rc-valor'), comp, auth());
+      await recarregarFinanceiro();
+      mostrarMensagem('Recebimento registrado!');
+    } catch (erro) { mostrarErro(erro); travarBotoes(false); }
+  }
+
+  async function pagarTela(ref) {
+    travarBotoes(true);
+    try {
+      const comp = await lerArquivoDoCampo('pg-comp');
+      await chamar('registrarPagamento', ref, valorDe('pg-data'), comp, auth());
+      await recarregarFinanceiro();
+      mostrarMensagem('Pagamento registrado!');
+    } catch (erro) { mostrarErro(erro); travarBotoes(false); }
+  }
+
+  function desfazerTela(tipo, id) {
+    if (!confirm('Desfazer este ' + (tipo === 'parcela' ? 'recebimento' : 'pagamento') + '? O comprovante vai para a lixeira.')) return;
+    acaoSetor('desfazerPagamento', [tipo, id], 'Desfeito.', recarregarFinanceiro);
+  }
+
+  function salvarContaTela() {
+    acaoSetor('salvarConta', [estado.fin.obra.ID_Obra, { Descricao: valorDe('ct-desc'), Fornecedor: valorDe('ct-forn'), Categoria: valorDe('ct-cat'),
+      Etapa: valorDe('ct-etapa'), Vencimento: valorDe('ct-venc'), Valor: valorDe('ct-valor') }], 'Conta lançada.', recarregarFinanceiro);
+  }
+
+  function removerContaTela(id) {
+    if (!confirm('Remover esta conta?')) return;
+    acaoSetor('removerConta', [id], 'Conta removida.', recarregarFinanceiro);
+  }
+
+  /* =========================================================
+   * TELA 15 – Entrega e Pós-venda ("duas fases")
+   * Vistoria → termo e chaves; depois garantias e chamados.
+   * ========================================================= */
+  async function telaEntrega(idObra) {
+    carregando('Abrindo Entrega/Pós-venda…');
+    try {
+      estado.ent = await chamar('abrirEntrega', idObra, auth());
+      estado.entForm = null;
+      desenharEntrega();
+    } catch (erro) { mostrarErro(erro); irPara('#/obra/' + idObra); }
+  }
+
+  async function recarregarEntrega() {
+    estado.ent = await chamar('abrirEntrega', estado.ent.obra.ID_Obra, auth());
+    estado.entForm = null;
+    desenharEntrega();
+  }
+
+  function desenharEntrega() {
+    const { obra, entrega, itensVistoria } = estado.ent;
+    const entregue = entrega.Situacao === 'Entregue';
+    const v = entrega.Vistoria || {};
+    const ok = itensVistoria.filter(n => v[n] && v[n].ok === true).length;
+    const passo = entregue ? 2 : ok === itensVistoria.length ? 1 : 0;
+    const barra = ['Vistoria', 'Termo e chaves', 'Pós-venda'].map((nome, i) => {
+      const cls = i < passo ? 'feito' : i === passo ? 'atual' : '';
+      return `<div class="passo ${cls}"><span class="bola">${i < passo ? '✓' : i + 1}</span>${nome}</div>${i < 2 ? `<div class="linha-passo ${i < passo ? 'feito' : ''}"></div>` : ''}`;
+    }).join('');
+    tela(`
+      ${cabecalhoSetor(obra, 'Entrega/Pós-venda', `<div class="cartao resumo-andamento">
+        <div class="suave">${entregue ? 'Chaves entregues em' : 'Vistoria'}</div>
+        <div class="numero">${entregue ? dataBR(entrega.DataChaves) : ok + ' de ' + itensVistoria.length}</div>
+        <div class="suave pequeno">${entregue ? 'Nota do cliente: ' + estrelas(entrega.NotaCliente) : 'itens OK'}</div>
+      </div>`)}
+      ${!estado.ent.podeEditar ? `<div class="aviso info">Você está vendo a Entrega/Pós-venda apenas para consulta.</div>` : ''}
+      <div class="cartao secao"><div class="passos">${barra}</div></div>
+      ${entregue ? entPosVenda() : entVistoria()}
+    `);
+  }
+
+  function entVistoria() {
+    const { entrega, itensVistoria, fisico, problemasAbertos, podeEditar, hoje } = estado.ent;
+    const v = entrega.Vistoria || {};
+    const tudoOk = itensVistoria.every(n => v[n] && v[n].ok === true);
+    const linhas = itensVistoria.map((nome, i) => {
+      const item = v[nome] || {};
+      return `<div class="linha-check">
+        <span>${esc(nome)}</span>
+        <div class="opcoes-check">
+          <label class="st-conforme"><input type="radio" name="vi-${i}" value="ok" ${item.ok === true ? 'checked' : ''} ${podeEditar ? '' : 'disabled'}
+            onchange="document.getElementById('vi-obs-${i}').hidden=true"> OK</label>
+          <label class="st-nao-conforme"><input type="radio" name="vi-${i}" value="pend" ${item.ok === false ? 'checked' : ''} ${podeEditar ? '' : 'disabled'}
+            onchange="document.getElementById('vi-obs-${i}').hidden=false"> Pendência</label>
+        </div>
+        <input class="obs-vistoria" id="vi-obs-${i}" ${item.ok === false ? '' : 'hidden'} value="${esc(item.obs)}" placeholder="O que precisa ser corrigido?" ${podeEditar ? '' : 'disabled'}>
+      </div>`;
+    }).join('');
+    return `
+      ${fisico.validado < 100 ? `<div class="aviso">A obra está com ${fisico.validado}% de andamento físico validado. Normalmente a vistoria acontece com 100%.</div>` : ''}
+      ${problemasAbertos ? `<div class="aviso">Ainda há ${problemasAbertos} problema(s) aberto(s) nesta obra (veja na aba do Gestor).</div>` : ''}
+      <div class="cartao secao">
+        <h2>1. Vistoria com o cliente</h2>
+        <p class="suave pequeno">Percorra a casa com o cliente. Marque OK ou anote a pendência. Corrigidas as pendências, faça a vistoria de novo.</p>
+        <div class="campo" style="max-width:220px"><label for="vi-data">Data da vistoria</label>
+          <input id="vi-data" type="date" value="${esc(entrega.VistoriaData || hoje)}" ${podeEditar ? '' : 'disabled'}></div>
+        <div style="margin-top:12px">${linhas}</div>
+        <div class="campo largo" style="margin-top:12px"><label for="vi-obs">Observações gerais</label>
+          <textarea id="vi-obs" ${podeEditar ? '' : 'disabled'}>${esc(entrega.Observacoes)}</textarea></div>
+        ${podeEditar ? `<div class="acoes"><button class="botao primario" onclick="salvarVistoriaTela()">Salvar vistoria</button></div>` : ''}
+      </div>
+      <div class="cartao secao ${tudoOk ? 'destaque-acao' : ''}">
+        <h2>2. Termo de entrega e chaves</h2>
+        ${!tudoOk ? '<p class="suave">Libera quando todos os itens da vistoria estiverem OK e salvos.</p>' : podeEditar ? `
+          <div class="campos">
+            <div class="campo"><label for="en-chaves">Data da entrega das chaves</label><input id="en-chaves" type="date" value="${hoje}"></div>
+            <div class="campo"><label for="en-termo">Termo de entrega assinado</label><input id="en-termo" type="file" accept="application/pdf,image/*"></div>
+            <div class="campo"><label for="en-nota">Nota do cliente (pesquisa de satisfação)</label>
+              <select id="en-nota"><option value="">Não respondeu</option>${[5, 4, 3, 2, 1].map(n => `<option value="${n}">${n} – ${'★'.repeat(n)}</option>`).join('')}</select></div>
+            <div class="campo largo"><label for="en-coment">Comentário do cliente</label><input id="en-coment"></div>
+          </div>
+          <p class="suave pequeno">Ao concluir, a obra passa para "Concluída" e começa o pós-venda (garantias e chamados).</p>
+          <div class="acoes"><button class="botao sucesso" onclick="concluirEntregaTela()">Concluir entrega</button></div>` : '<p class="suave">Esperando a entrega das chaves.</p>'}
+      </div>`;
+  }
+
+  function entPosVenda() {
+    const { entrega, garantias, chamados, passosChamado, podeEditar, hoje } = estado.ent;
+    const notas = chamados.map(c => Number(c.Nota)).filter(Boolean);
+    const coluna = passo => {
+      const lista = chamados.filter(c => c.Situacao === passo);
+      return `<div class="coluna-quadro"><div class="titulo-coluna">${passo} <span class="suave">(${lista.length})</span></div>
+        ${lista.map(cartaoChamado).join('') || '<div class="suave pequeno" style="padding:8px">—</div>'}</div>`;
+    };
+    return `
+      <div class="duas-colunas">
+        <div class="cartao secao">
+          <h2>Entrega</h2>
+          <dl class="lista-dados">
+            <div><dt>Chaves entregues</dt><dd>${dataBR(entrega.DataChaves)}</dd></div>
+            <div><dt>Termo assinado</dt><dd>${linkArquivo(entrega.TermoArquivo, 'Abrir termo') || '—'}</dd></div>
+            <div><dt>Nota do cliente</dt><dd>${estrelas(entrega.NotaCliente)}${entrega.ComentarioCliente ? `<div class="pequeno suave">"${esc(entrega.ComentarioCliente)}"</div>` : ''}</dd></div>
+            ${notas.length ? `<div><dt>Média nos chamados</dt><dd>${(notas.reduce((a, b) => a + b, 0) / notas.length).toFixed(1).replace('.', ',')} de 5 (${notas.length})</dd></div>` : ''}
+          </dl>
+        </div>
+        <div class="cartao secao tabela-rolavel">
+          <h2>Garantias</h2>
+          <table class="tabela"><thead><tr><th>Sistema</th><th>Prazo</th><th>Até</th></tr></thead>
+          <tbody>${garantias.map(g => `<tr><td class="pequeno">${esc(g.sistema)}</td><td class="num">${g.anos} ano(s)</td>
+            <td>${g.validaAte >= hoje ? `<span class="etiqueta st-vigente">${dataBR(g.validaAte)}</span>` : `<span class="etiqueta st-vencida">Venceu ${dataBR(g.validaAte)}</span>`}</td></tr>`).join('')}</tbody></table>
+          <p class="suave pequeno">Prazos de exemplo. A construtora vai confirmar os dela.</p>
+        </div>
+      </div>
+      <div class="cartao secao">
+        <div class="cabecalho-obra" style="margin-bottom:10px;align-items:center">
+          <h2 style="margin:0">Chamados de assistência</h2>
+          ${podeEditar && estado.entForm !== 'novo' ? `<button class="botao primario" onclick="estado.entForm='novo'; desenharEntrega()">+ Novo chamado</button>` : ''}
+        </div>
+        ${estado.entForm === 'novo' ? `<div class="form-inline">
+          <div class="campos">
+            <div class="campo"><label for="ch-data">Aberto em</label><input id="ch-data" type="date" max="${hoje}" value="${hoje}"></div>
+            <div class="campo"><label for="ch-sis">Parte da casa</label><select id="ch-sis">${garantias.map(g =>
+              `<option value="${esc(g.sistema)}">${esc(g.sistema)}${g.validaAte < hoje ? ' (fora da garantia)' : ''}</option>`).join('')}</select></div>
+            <div class="campo"><label for="ch-foto">Foto</label><input id="ch-foto" type="file" accept="image/*"></div>
+            <div class="campo largo"><label for="ch-desc">O que o cliente relatou</label><textarea id="ch-desc"></textarea></div>
+          </div>
+          <div class="acoes"><button class="botao" onclick="estado.entForm=null; desenharEntrega()">Cancelar</button>
+            <button class="botao primario" onclick="abrirChamadoTela()">Abrir chamado</button></div>
+        </div>` : ''}
+        <div class="quadro">${passosChamado.map(coluna).join('')}</div>
+      </div>`;
+  }
+
+  function cartaoChamado(c) {
+    const { podeEditar, hoje } = estado.ent;
+    const id = c.ID_Chamado;
+    let acao = '';
+    if (podeEditar && c.Situacao === 'Aberto') {
+      acao = `<div class="campo"><label>Data da visita</label><input id="cv-${id}" type="date" value="${somarDias(hoje, 2)}"></div>
+        <button class="botao pequeno primario" onclick="avancarChamadoTela('${id}', { DataVisita: valorDe('cv-${id}') })">Agendar visita</button>`;
+    } else if (podeEditar && c.Situacao === 'Visita agendada') {
+      acao = `<button class="botao pequeno primario" onclick="avancarChamadoTela('${id}', {})">Iniciar reparo</button>`;
+    } else if (podeEditar && c.Situacao === 'Em reparo') {
+      acao = formEncerrar(id, false);
+    }
+    return `<div class="cartao-chamado">
+      <div class="cabecalho-feed"><span class="codigo">${esc(c.Numero)}</span>
+        <span class="etiqueta ${c.NaGarantia === 'Sim' ? 'st-vigente' : 'st-vencida'}">${c.NaGarantia === 'Sim' ? 'Na garantia' : 'Fora da garantia'}</span></div>
+      <strong class="pequeno">${esc(c.Sistema)}</strong>
+      <div class="pequeno">${esc(c.Descricao)}</div>
+      <div class="suave pequeno">Aberto em ${dataBR(c.Data)}${c.DataVisita ? ' · visita ' + dataBR(c.DataVisita) : ''}</div>
+      ${linkArquivo(c.Foto, 'Foto')}
+      ${c.Situacao === 'Encerrado' ? `<div class="pequeno"><strong>Solução:</strong> ${esc(c.Solucao)}</div>
+        <div class="pequeno">Encerrado em ${dataBR(c.EncerradoEm)} · ${estrelas(c.Nota)}</div>` : ''}
+      ${acao}
+      ${podeEditar && c.Situacao !== 'Encerrado' && c.Situacao !== 'Em reparo' ? `<details><summary class="pequeno">Encerrar sem reparo</summary>${formEncerrar(id, true)}</details>` : ''}
+    </div>`;
+  }
+
+  function formEncerrar(id, direto) {
+    const s = direto ? 'd' : 'e';
+    return `<div class="campo"><label>${direto ? 'Motivo' : 'O que foi feito'}</label><input id="cs-${s}-${id}" placeholder="${direto ? 'Ex.: fora da garantia; mau uso' : 'Ex.: disjuntor trocado'}"></div>
+      <div class="campo"><label>Nota do cliente</label><select id="cn-${s}-${id}"><option value="">Não respondeu</option>${[5, 4, 3, 2, 1].map(n => `<option>${n}</option>`).join('')}</select></div>
+      <button class="botao pequeno sucesso" onclick="avancarChamadoTela('${id}', { Encerrar: true, Solucao: valorDe('cs-${s}-${id}'), Nota: valorDe('cn-${s}-${id}') })">Encerrar chamado</button>`;
+  }
+
+  function salvarVistoriaTela() {
+    const itens = {};
+    estado.ent.itensVistoria.forEach((nome, i) => {
+      const marcado = document.querySelector(`input[name="vi-${i}"]:checked`);
+      itens[nome] = { ok: marcado ? marcado.value === 'ok' : null, obs: valorDe('vi-obs-' + i) };
+    });
+    acaoSetor('salvarVistoria', [estado.ent.obra.ID_Obra, valorDe('vi-data'), itens, valorDe('vi-obs')], 'Vistoria salva.', recarregarEntrega);
+  }
+
+  async function concluirEntregaTela() {
+    if (!confirm('Concluir a entrega? A obra passa para "Concluída".')) return;
+    travarBotoes(true);
+    try {
+      const termo = await lerArquivoDoCampo('en-termo');
+      await chamar('concluirEntrega', estado.ent.obra.ID_Obra, valorDe('en-chaves'), valorDe('en-nota'), valorDe('en-coment'), termo, auth());
+      await recarregarEntrega();
+      mostrarMensagem('Obra entregue! Agora começa o pós-venda.');
+    } catch (erro) { mostrarErro(erro); travarBotoes(false); }
+  }
+
+  async function abrirChamadoTela() {
+    travarBotoes(true);
+    try {
+      const foto = await lerArquivoDoCampo('ch-foto');
+      const n = await chamar('abrirChamado', estado.ent.obra.ID_Obra, { Data: valorDe('ch-data'), Sistema: valorDe('ch-sis'), Descricao: valorDe('ch-desc') }, foto, auth());
+      await recarregarEntrega();
+      mostrarMensagem(`Chamado ${n} aberto.`);
+    } catch (erro) { mostrarErro(erro); travarBotoes(false); }
+  }
+
+  function avancarChamadoTela(id, dados) {
+    acaoSetor('avancarChamado', [id, dados], r => `Chamado: ${r}.`, recarregarEntrega);
   }
 
   iniciar();
