@@ -464,6 +464,32 @@
     <div class="carregando"><div class="girando"></div>Carregando…</div>
   </main>
 
+  <script>
+    // Rede de segurança (escrita no JavaScript mais antigo, para rodar em qualquer navegador):
+    // se o site der erro ao abrir ou não terminar de carregar, mostra o motivo e um botão
+    // para recarregar, em vez de ficar em "Carregando…" para sempre.
+    window.__errosDoSite = [];
+    window.addEventListener('error', function (e) {
+      window.__errosDoSite.push((e.message || 'erro') + (e.lineno ? ' (linha ' + e.lineno + ')' : ''));
+    });
+    window.addEventListener('unhandledrejection', function (e) {
+      window.__errosDoSite.push(String((e.reason && e.reason.message) || e.reason));
+    });
+    function __verificarAbertura(segundos) {
+      var tela = document.getElementById('tela');
+      if (!tela || !tela.querySelector('.carregando')) return;
+      if (segundos < 120 && !window.__errosDoSite.length) return;
+      var erros = window.__errosDoSite.length
+        ? 'Erro no navegador: ' + window.__errosDoSite.slice(0, 3).join(' | ')
+        : 'O servidor do Google não respondeu em 2 minutos.';
+      tela.innerHTML = '<div class="tela-login cartao"><h1>O sistema não terminou de abrir</h1>' +
+        '<p class="suave">' + erros.replace(/</g, '&lt;') + '</p>' +
+        '<p class="suave pequeno">Navegador: ' + navigator.userAgent.replace(/</g, '&lt;') + '</p>' +
+        '<button class="botao primario largo" onclick="location.reload()">Recarregar</button></div>';
+    }
+    setTimeout(function () { __verificarAbertura(15); }, 15000);
+    setTimeout(function () { __verificarAbertura(120); }, 120000);
+  </script>
   <script>window.API_URL = 'https://script.google.com/macros/s/AKfycbywJg49Ftbqzh5b9lH7WorZaftSXjl5nx6Vg38_lAw1dSc_HM8teo8znG44CSKW2KgQ/exec';</script>
 <script>
   /* =========================================================
