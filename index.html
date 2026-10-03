@@ -210,6 +210,11 @@
   .tela-login form { display: grid; gap: 14px; }
   .tela-login .link-voltar { background: none; border: 0; padding: 0; margin: 0; text-align: left; }
   .botao.largo { width: 100%; justify-content: center; }
+  .campo-senha { position: relative; }
+  .campo-senha input { padding-right: 44px; }
+  .ver-senha { position: absolute; right: 4px; top: 50%; transform: translateY(-50%); background: none; border: 0;
+    padding: 6px 8px; cursor: pointer; color: var(--texto-suave); display: grid; place-items: center; border-radius: 6px; }
+  .ver-senha:hover { color: var(--texto); background: var(--cinza-claro); }
   .separador { display: flex; align-items: center; gap: 10px; color: var(--texto-suave); font-size: 13px; }
   .separador::before, .separador::after { content: ''; flex: 1; height: 1px; background: var(--borda); }
   .pequeno { font-size: 13px; }
@@ -603,7 +608,7 @@
           <div class="campo"><label for="login-email">E-mail</label>
             <input id="login-email" type="email" autocomplete="email" required value="${esc(estado.loginEmail || lerLocal('ultimoEmail'))}"></div>
           <div class="campo"><label for="login-senha">Senha</label>
-            <input id="login-senha" type="password" autocomplete="current-password" required></div>
+            <div class="campo-senha"><input id="login-senha" type="password" autocomplete="current-password" required><button type="button" class="ver-senha" onclick="alternarSenha('login-senha', this)" aria-label="Mostrar senha" title="Mostrar senha">${ICONE_OLHO}</button></div></div>
           <button class="botao primario largo" id="btn-entrar">Entrar</button>
         </form>
         <div class="separador">Ainda não tem cadastro?</div>
@@ -611,6 +616,20 @@
         <p class="suave pequeno">Esqueceu a senha? Fale com o administrador do sistema.</p>
       </div>`);
     document.getElementById(document.getElementById('login-email').value ? 'login-senha' : 'login-email').focus();
+  }
+
+  const ICONE_OLHO = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"/><circle cx="12" cy="12" r="3"/></svg>`;
+  const ICONE_OLHO_FECHADO = `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.9 17.9A10.4 10.4 0 0 1 12 19c-7 0-11-7-11-7a18.5 18.5 0 0 1 5.1-5.9M9.9 5.2A9.1 9.1 0 0 1 12 5c7 0 11 7 11 7a18.6 18.6 0 0 1-2.2 3.2M14.1 14.1a3 3 0 1 1-4.2-4.2"/><path d="M1 1l22 22"/></svg>`;
+
+  // Mostra ou esconde a senha digitada
+  function alternarSenha(id, botao) {
+    const campo = document.getElementById(id);
+    const mostrar = campo.type === 'password';
+    campo.type = mostrar ? 'text' : 'password';
+    botao.innerHTML = mostrar ? ICONE_OLHO_FECHADO : ICONE_OLHO;
+    botao.setAttribute('aria-label', mostrar ? 'Esconder senha' : 'Mostrar senha');
+    botao.title = mostrar ? 'Esconder senha' : 'Mostrar senha';
+    campo.focus();
   }
 
   async function fazerLogin() {
@@ -640,9 +659,9 @@
           <div class="campo"><label for="cad-setor">Setor em que você trabalha</label>
             <select id="cad-setor" required><option value="">Selecione…</option>${setores.map(s => `<option>${esc(s)}</option>`).join('')}</select></div>
           <div class="campo"><label for="cad-senha">Senha (mínimo 6 caracteres)</label>
-            <input id="cad-senha" type="password" minlength="6" required autocomplete="new-password"></div>
+            <div class="campo-senha"><input id="cad-senha" type="password" minlength="6" required autocomplete="new-password"><button type="button" class="ver-senha" onclick="alternarSenha('cad-senha', this)" aria-label="Mostrar senha" title="Mostrar senha">${ICONE_OLHO}</button></div></div>
           <div class="campo"><label for="cad-senha2">Repita a senha</label>
-            <input id="cad-senha2" type="password" minlength="6" required autocomplete="new-password"></div>
+            <div class="campo-senha"><input id="cad-senha2" type="password" minlength="6" required autocomplete="new-password"><button type="button" class="ver-senha" onclick="alternarSenha('cad-senha2', this)" aria-label="Mostrar senha" title="Mostrar senha">${ICONE_OLHO}</button></div></div>
           <button class="botao primario largo" id="btn-cadastrar">Enviar cadastro</button>
         </form>
         <button class="link-voltar" onclick="telaEntrar()">Já tenho cadastro: entrar</button>
