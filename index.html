@@ -380,14 +380,22 @@
       throw erro;
     };
     if (window.API_URL) {
+      const controle = new AbortController();
+      const limite = setTimeout(() => controle.abort(), 45000);
       return fetch(window.API_URL, {
         method: 'POST',
+        signal: controle.signal,
         // text/plain evita a checagem extra do navegador (CORS) que o Google não aceita
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify({ fn: funcao, args })
       })
-        .catch(() => { throw new Error('Sem conexão com o servidor. Verifique a internet e tente de novo.'); })
+        .catch(e => {
+          throw new Error(e.name === 'AbortError'
+            ? 'O servidor demorou demais para responder. Tente de novo em alguns segundos.'
+            : 'Sem conexão com o servidor. Verifique a internet e tente de novo.');
+        })
         .then(r => r.json())
+        .finally(() => clearTimeout(limite))
         .then(d => { if (!d.ok) throw new Error(d.erro); return d.r; })
         .catch(falhou);
     }
@@ -442,7 +450,15 @@
 
   function carregando(texto) {
     document.getElementById('tela').innerHTML =
-      `<div class="carregando"><div class="girando"></div>${esc(texto || 'Carregando…')}</div>`;
+      `<div class="carregando"><div class="girando"></div>${esc(texto || 'Carregando…')}
+        <p class="suave pequeno aviso-demora" hidden>O servidor do Google está demorando para responder.
+        O primeiro acesso do dia pode levar até 20 segundos.</p></div>`;
+    // Se ainda estiver carregando depois de 8 s, explica que é normal na primeira vez
+    clearTimeout(estado.timerDemora);
+    estado.timerDemora = setTimeout(() => {
+      const aviso = document.querySelector('#tela .aviso-demora');
+      if (aviso) aviso.hidden = false;
+    }, 8000);
   }
 
   // Lê os campos de um formulário: { NomeDoCampo: valor }
@@ -487,11 +503,14 @@
   }
 
   async function iniciar() {
+    carregando();
     estado.auth = { token: lerLocal('tokenSessao'), verComo: lerLocal('verComo') };
     try {
       tratarSituacao(await chamar('iniciarSessao', estado.auth.token));
     } catch (erro) {
-      tela(`<div class="aviso">Não foi possível carregar o sistema: ${esc(erro.message || erro)}</div>`);
+      tela(`<div class="tela-login cartao"><h1>Não foi possível carregar</h1>
+        <p class="suave">${esc(erro.message || erro)}</p>
+        <button class="botao primario largo" onclick="carregando(); iniciar()">Tentar de novo</button></div>`);
     }
   }
 
