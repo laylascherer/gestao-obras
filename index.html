@@ -66,6 +66,15 @@
 
   h1 { font-size: 24px; margin: 0 0 4px; }
   h2 { font-size: 18px; margin: 0 0 12px; }
+  h3 { font-size: 16px; margin: 0; }
+
+  /* Campo de arquivo: mesmo estilo dos botões e nunca mais largo que o espaço disponível */
+  input[type=file] { max-width: 100%; min-width: 0; font-size: 13px; color: var(--texto-suave); }
+  input[type=file]::file-selector-button {
+    font: inherit; font-weight: 500; color: var(--texto); background: var(--cartao);
+    border: 1px solid var(--borda); border-radius: 8px; padding: 7px 12px; margin-right: 10px; cursor: pointer;
+  }
+  input[type=file]::file-selector-button:hover { background: var(--cinza-claro); }
   .suave { color: var(--texto-suave); }
 
   /* ---------- Botões ---------- */
@@ -261,8 +270,12 @@
   .checklist-pronto { list-style: none; padding: 0; margin: 4px 0; display: grid; gap: 6px; color: var(--texto-suave); }
   .checklist-pronto li.ok { color: var(--verde); font-weight: 500; }
   .grade-cartoes { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 14px; }
-  .envio-versao { display: grid; gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--cinza-claro); }
+  .envio-versao { display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px; margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--cinza-claro); }
+  .envio-versao > * { min-width: 0; width: 100%; }
   .envio-versao input:not([type=file]) { padding: 7px 10px; border: 1px solid var(--borda); border-radius: 8px; }
+  .envio-versao .botao { justify-content: center; }
+  .grade-cartoes > .cartao { min-width: 0; display: flex; flex-direction: column; }
+  .grade-cartoes .cabecalho-obra { align-items: center; flex-wrap: nowrap; }
   .lista-simples { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 4px; }
   .arquivo-pequeno { font-size: 12px; max-width: 200px; }
   .tabela input, .tabela select { padding: 6px 8px; border: 1px solid var(--borda); border-radius: 6px; background: #fff; width: 100%; min-width: 0; }
