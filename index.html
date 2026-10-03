@@ -431,6 +431,10 @@
   .st-em-correcao, .st-a-vencer, .st-visita-agendada { background: var(--primaria-clara); color: var(--primaria); }
   .st-baixa, .st-nao-se-aplica, .st-nao-iniciada { background: var(--cinza-claro); color: #4a5568; }
 
+  /* ---------- Máscaras de CPF/CNPJ/telefone ---------- */
+  .campo-invalido { border-color: var(--vermelho) !important; }
+  .aviso-campo { color: var(--vermelho); font-size: 12px; margin-top: 4px; }
+
   @media (max-width: 900px) { .duas-colunas { grid-template-columns: minmax(0, 1fr); } .funil { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); } }
 
   @media (max-width: 640px) {
@@ -551,6 +555,78 @@
         throw erro;
       });
   }
+
+  /* ---------- Máscaras: CPF, CNPJ e telefone ----------
+   * A pessoa digita só os números e o campo coloca pontos, barra, traço e parênteses.
+   * Use mascara('cpf' | 'cnpj' | 'telefone') dentro da tag <input>. */
+  const MASCARAS = {
+    cpf: { max: 11, exemplo: '000.000.000-00', formatar: d => d.replace(/^(\d{3})(\d)/, '$1.$2').replace(/^(\d{3})\.(\d{3})(\d)/, '$1.$2.$3')
+      .replace(/\.(\d{3})(\d)/, '.$1-$2') },
+    cnpj: { max: 14, exemplo: '00.000.000/0000-00', formatar: d => d.replace(/^(\d{2})(\d)/, '$1.$2').replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+      .replace(/\.(\d{3})(\d)/, '.$1/$2').replace(/(\d{4})(\d)/, '$1-$2') },
+    telefone: { max: 11, exemplo: '(00) 00000-0000', formatar: d => d.length <= 2 ? d.replace(/^(\d+)/, '($1')
+      : d.length <= 10 ? d.replace(/^(\d{2})(\d{0,4})(\d{0,4}).*/, (_, a, b, c) => `(${a}) ${b}${c ? '-' + c : ''}`)
+      : d.replace(/^(\d{2})(\d{5})(\d{4}).*/, '($1) $2-$3') }
+  };
+
+  function mascara(tipo) {
+    const m = MASCARAS[tipo];
+    return ` data-mascara="${tipo}" inputmode="numeric" autocomplete="off" placeholder="${m.exemplo}" maxlength="${m.exemplo.length}"`;
+  }
+
+  function aplicarMascara(campo) {
+    const m = MASCARAS[campo.dataset.mascara];
+    let d = campo.value.replace(/\D/g, '');
+    if (campo.dataset.mascara === 'telefone' && d.length > 11 && d.startsWith('55')) d = d.slice(2); // colado com +55
+    campo.value = m.formatar(d.slice(0, m.max));
+    conferirDocumento(campo);
+  }
+
+  // CPF e CNPJ: confere os dígitos verificadores e avisa embaixo do campo (não impede salvar)
+  function conferirDocumento(campo) {
+    const tipo = campo.dataset.mascara;
+    if (tipo === 'telefone') return;
+    const d = campo.value.replace(/\D/g, '');
+    const completo = d.length === MASCARAS[tipo].max;
+    const valido = !completo || (tipo === 'cpf' ? cpfValido(d) : cnpjValido(d));
+    let aviso = campo.parentElement.querySelector('.aviso-campo');
+    if (valido) { if (aviso) aviso.remove(); campo.classList.remove('campo-invalido'); return; }
+    if (!aviso) {
+      aviso = document.createElement('div');
+      aviso.className = 'aviso-campo';
+      campo.insertAdjacentElement('afterend', aviso);
+    }
+    aviso.textContent = (tipo === 'cpf' ? 'CPF' : 'CNPJ') + ' inválido. Confira os números.';
+    campo.classList.add('campo-invalido');
+  }
+
+  function cpfValido(d) {
+    if (/^(\d)\1{10}$/.test(d)) return false;
+    const digito = n => { let soma = 0; for (let i = 0; i < n; i++) soma += d[i] * (n + 1 - i); const r = soma * 10 % 11; return r === 10 ? 0 : r; };
+    return digito(9) === Number(d[9]) && digito(10) === Number(d[10]);
+  }
+
+  function cnpjValido(d) {
+    if (/^(\d)\1{13}$/.test(d)) return false;
+    const digito = n => {
+      const pesos = n === 12 ? [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2] : [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2];
+      const r = pesos.reduce((s, p, i) => s + d[i] * p, 0) % 11;
+      return r < 2 ? 0 : 11 - r;
+    };
+    return digito(12) === Number(d[12]) && digito(13) === Number(d[13]);
+  }
+
+  document.addEventListener('input', e => {
+    const campo = e.target;
+    if (!campo.dataset || !campo.dataset.mascara) return;
+    // Apagar um ponto/traço com a tecla de apagar: apaga também o número antes dele
+    const antes = campo.dataset.digitos || '';
+    if (e.inputType && e.inputType.startsWith('delete') && campo.value.replace(/\D/g, '') === antes) {
+      campo.value = antes.slice(0, -1);
+    }
+    aplicarMascara(campo);
+    campo.dataset.digitos = campo.value.replace(/\D/g, '');
+  });
 
   // Evita que um texto digitado vire HTML
   function esc(texto) {
@@ -786,7 +862,7 @@
         <form id="form-cadastro" onsubmit="event.preventDefault(); enviarCadastro()">
           <div class="campo"><label for="cad-nome">Nome completo</label><input id="cad-nome" required autocomplete="name"></div>
           <div class="campo"><label for="cad-email">E-mail</label><input id="cad-email" type="email" required autocomplete="email"></div>
-          <div class="campo"><label for="cad-tel">Telefone</label><input id="cad-tel" type="tel" autocomplete="tel"></div>
+          <div class="campo"><label for="cad-tel">Telefone</label><input id="cad-tel" type="tel"${mascara('telefone')}></div>
           <div class="campo"><label for="cad-setor">Setor em que você trabalha</label>
             <select id="cad-setor" required><option value="">Selecione…</option>${setores.map(s => `<option>${esc(s)}</option>`).join('')}</select></div>
           <div class="campo"><label for="cad-senha">Senha (mínimo 6 caracteres)</label>
@@ -942,7 +1018,7 @@
         <h2>Dados</h2>
         <div class="campos">
           <div class="campo"><label for="u-nome">Nome</label><input id="u-nome" value="${esc(u.Nome)}"></div>
-          <div class="campo"><label for="u-tel">Telefone</label><input id="u-tel" value="${esc(u.Telefone)}"></div>
+          <div class="campo"><label for="u-tel">Telefone</label><input id="u-tel" type="tel" value="${esc(u.Telefone)}"${mascara('telefone')}></div>
           <div class="campo"><label for="u-setor">Setor</label>
             <select id="u-setor" onchange="aplicarPadrao()"><option value="">Selecione…</option>${opcoes(estado.admin.setoresUsuario, u.Setor)}</select></div>
           <div class="campo"><label for="u-nivel">Nível de acesso</label>
@@ -1166,13 +1242,12 @@
     const campos = CAMPOS_OBRA.map(([nome, rotulo, tipo, largura]) => {
       const valor = obra[nome] ?? '';
       let conteudo;
-      if (!editaveis.includes(nome)) {
+      if (tipo === 'status') {
+        conteudo = `<div class="valor">${etiqueta(valor)} <span class="suave pequeno">automático · ${esc(obra.MotivoStatus || '')}</span></div>`;
+      } else if (!editaveis.includes(nome)) {
         conteudo = `<div class="valor">${tipo === 'data' ? dataBR(valor) : esc(valor) || '—'}</div>`;
       } else if (tipo === 'data') {
         conteudo = `<input type="date" name="${nome}" value="${esc(valor)}">`;
-      } else if (tipo === 'status') {
-        conteudo = `<select name="${nome}">${STATUS.map(s =>
-          `<option ${s === valor ? 'selected' : ''}>${s}</option>`).join('')}</select>`;
       } else if (tipo === 'textoLongo') {
         conteudo = `<textarea name="${nome}">${esc(valor)}</textarea>`;
       } else {
@@ -1278,9 +1353,9 @@
   const SECOES_COMERCIAL = [
     ['Cliente', [
       ['NomeCliente', 'Nome', 'texto'],
-      ['CPF', 'CPF', 'texto'],
-      ['Telefone', 'Telefone', 'texto'],
-      ['Email', 'E-mail', 'texto'],
+      ['CPF', 'CPF', 'cpf'],
+      ['Telefone', 'Telefone', 'telefone'],
+      ['Email', 'E-mail', 'email'],
       ['EnderecoAtual', 'Endereço atual', 'texto', 'largo']
     ]],
     ['Terreno', [
@@ -1332,9 +1407,10 @@
       } else if (tipo === 'textoLongo') {
         conteudo = `<textarea name="${nome}">${esc(valor)}</textarea>`;
       } else {
-        const tipoInput = tipo === 'data' ? 'date' : (tipo === 'numero' || tipo === 'dinheiro') ? 'number' : 'text';
+        const tipoInput = tipo === 'data' ? 'date' : (tipo === 'numero' || tipo === 'dinheiro') ? 'number' : tipo === 'email' ? 'email' : 'text';
         const passo = tipoInput === 'number' ? ' step="any" min="0"' : '';
-        conteudo = `<input type="${tipoInput}" name="${nome}" value="${esc(valor)}"${passo}${recalcula}>`;
+        const extra = MASCARAS[tipo] ? mascara(tipo) : '';
+        conteudo = `<input type="${tipoInput}" name="${nome}" value="${esc(valor)}"${passo}${extra}${recalcula}>`;
       }
       return `<div class="campo ${largura || ''}"><label>${rotulo}</label>${conteudo}</div>`;
     };
@@ -2677,10 +2753,10 @@
       <strong>${f.ID_Fornecedor ? 'Editar fornecedor' : 'Novo fornecedor'}</strong>
       <div class="campos" style="margin-top:8px">
         <div class="campo"><label for="fo-nome">Nome</label><input id="fo-nome" value="${esc(f.Nome)}"></div>
-        <div class="campo"><label for="fo-cnpj">CNPJ</label><input id="fo-cnpj" value="${esc(f.CNPJ)}"></div>
+        <div class="campo"><label for="fo-cnpj">CNPJ</label><input id="fo-cnpj" value="${esc(f.CNPJ)}"${mascara('cnpj')}></div>
         <div class="campo"><label for="fo-cat">Categoria</label><input id="fo-cat" value="${esc(f.Categoria)}" placeholder="Ex.: Elétrica"></div>
         <div class="campo"><label for="fo-contato">Contato</label><input id="fo-contato" value="${esc(f.Contato)}"></div>
-        <div class="campo"><label for="fo-tel">Telefone</label><input id="fo-tel" value="${esc(f.Telefone)}"></div>
+        <div class="campo"><label for="fo-tel">Telefone</label><input id="fo-tel" type="tel" value="${esc(f.Telefone)}"${mascara('telefone')}></div>
         <div class="campo"><label for="fo-email">E-mail</label><input id="fo-email" value="${esc(f.Email)}"></div>
         <div class="campo"><label for="fo-aval">Avaliação</label><select id="fo-aval">${[0, 1, 2, 3, 4, 5].map(n =>
           `<option value="${n}" ${Number(f.Avaliacao) === n ? 'selected' : ''}>${n ? estrelas(n) : 'Sem avaliação'}</option>`).join('')}</select></div>
@@ -3324,6 +3400,8 @@
           <div class="campo"><label for="pb-foto">Foto</label><input id="pb-foto" type="file" accept="image/*"></div>
           <div class="campo largo"><label for="pb-desc">Detalhes</label><textarea id="pb-desc"></textarea></div>
         </div>
+        <label class="opcao"><input type="checkbox" id="pb-parou"> Este problema <strong>parou a obra</strong>
+          <span class="suave pequeno">(a obra fica "Aguardando retomada" até ele ser resolvido)</span></label>
         <p class="suave pequeno">O problema vai para o Gestor, que define o que fazer, quem faz e até quando.</p>
         <div class="acoes">${fechar}<button class="botao primario" onclick="salvarProblemaTela()">Registrar problema</button></div>
       </div>`;
@@ -3426,7 +3504,7 @@
     return `<div class="problema gravidade-${classeStatus(p.Gravidade)}">
       <div class="cabecalho-feed">
         <div><span class="codigo">${esc(p.Numero)}</span> <strong>${esc(p.Titulo)}</strong></div>
-        <div class="etiquetas">${etiqueta(p.Gravidade)}${etiqueta(p.Situacao)}</div>
+        <div class="etiquetas">${parouObra(p) && p.Situacao !== 'Resolvido' ? '<span class="etiqueta st-atrasada">Parou a obra</span>' : ''}${etiqueta(p.Gravidade)}${etiqueta(p.Situacao)}</div>
       </div>
       <div class="suave pequeno">Aberto em ${dataBR(p.Data)} · ${p.Situacao === 'Resolvido' ? 'resolvido em ' + dataBR(p.ResolvidoEm) : 'há ' + p.DiasAberto + ' dia(s)'}</div>
       ${p.Descricao ? `<div class="pequeno">${esc(p.Descricao)}</div>` : ''}
@@ -3443,6 +3521,8 @@
         </div>
         <div class="acoes"><button class="botao primario pequeno" onclick="salvarPlanoAcao('${p.ID_Problema}')">Salvar plano</button></div>
       </details>` : ''}
+      ${(podeResolver || podeDefinir) && p.Situacao !== 'Resolvido' ? `<label class="opcao pequeno" style="margin:0">
+        <input type="checkbox" ${parouObra(p) ? 'checked' : ''} onchange="definirParadaTela('${p.ID_Problema}', this.checked)"> Este problema parou a obra</label>` : ''}
       ${podeResolver && p.Situacao !== 'Resolvido' ? `<div class="resolver-linha">
         <input id="pb-sol-${p.ID_Problema}" placeholder="Como foi resolvido?">
         <button class="botao sucesso pequeno" onclick="resolverProblemaTela('${p.ID_Problema}')">Marcar resolvido</button></div>` : ''}
@@ -3489,6 +3569,12 @@
     return !navigator.onLine || /falar com o servidor|demorou demais|Sem internet/.test(String(erro && erro.message));
   }
 
+  function parouObra(p) { return p.ParouObra === true || p.ParouObra === 'TRUE'; }
+
+  function definirParadaTela(id, parou) {
+    acaoSetor('definirParada', [id, parou], status => `Status da obra: ${status}.`, recarregarTelaAtual);
+  }
+
   async function salvarDiarioTela() {
     guardarRascunhoDiario();
     travarBotoes(true);
@@ -3531,7 +3617,8 @@
     try {
       const foto = await lerArquivoDoCampo('pb-foto');
       const numero = await chamar('registrarProblema', estado.fis.obra.ID_Obra,
-        { Titulo: valorDe('pb-titulo'), Gravidade: valorDe('pb-grav'), Descricao: valorDe('pb-desc') }, foto, auth());
+        { Titulo: valorDe('pb-titulo'), Gravidade: valorDe('pb-grav'), Descricao: valorDe('pb-desc'),
+          ParouObra: document.getElementById('pb-parou').checked }, foto, auth());
       await recarregarFiscal();
       mostrarMensagem(`Problema ${numero} registrado. O Gestor vai definir o plano de ação.`);
     } catch (erro) { mostrarErro(erro); travarBotoes(false); }
