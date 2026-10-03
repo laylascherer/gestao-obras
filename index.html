@@ -505,7 +505,10 @@
         funcao === 'enviarParteArquivo' || funcao === 'baixarArquivo';
       // Quem leva arquivo pode demorar mais no servidor (salvar no Drive)
       const comArquivo = args.some(a => a && (a.base64 || a.envio));
-      return pedirAoServidor(funcao, args, leitura ? 3 : 1, comArquivo ? 330000 : 45000).catch(falhou);
+      const envio = idDoEnvio(args);
+      return pedirAoServidor(funcao, args, leitura ? 3 : 1, comArquivo ? 330000 : 45000)
+        .catch(erro => envio && erro.semResposta ? esperarResposta(envio, erro) : Promise.reject(erro))
+        .catch(falhou);
     }
     return new Promise((resolve, reject) => {
       google.script.run
@@ -513,6 +516,26 @@
         .withFailureHandler(reject)
         [funcao](...args);
     }).catch(falhou);
+  }
+
+  // Arquivo grande mandado em pedaços: a "senha" do envio
+  function idDoEnvio(args) {
+    for (const a of args) for (const x of Array.isArray(a) ? a : [a]) if (x && x.envio) return x.envio;
+    return null;
+  }
+
+  // O Google perdeu a resposta de um envio grande: pergunta a cada 10 s se ele terminou (até 6 min)
+  async function esperarResposta(envio, erroOriginal) {
+    for (let i = 0; i < 36; i++) {
+      mostrarAvisoFixo('Salvando o arquivo no Google Drive… arquivos grandes podem levar alguns minutos.');
+      await new Promise(r => setTimeout(r, 10000));
+      const guardada = await pedirAoServidor('buscarResposta', [envio, auth()], 1).catch(() => null);
+      if (guardada) {
+        if (!guardada.ok) throw new Error(guardada.erro);
+        return guardada.r;
+      }
+    }
+    throw erroOriginal;
   }
 
   // Uma chamada ao servidor pelo endereço API_URL (site no GitHub)
@@ -552,6 +575,8 @@
         if (falhaDeRede && tentativas > 1) {
           return new Promise(r => setTimeout(r, 2000)).then(() => pedirAoServidor(funcao, args, tentativas - 1, tempoLimite));
         }
+        // Sem resposta do servidor (rede, página de erro ou tempo esgotado): o pedido pode ter dado certo lá
+        if (falhaDeRede || erro.name === 'AbortError' || /demorou demais/.test(erro.message)) erro.semResposta = true;
         throw erro;
       });
   }
