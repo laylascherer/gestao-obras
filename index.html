@@ -317,6 +317,18 @@
   .st-pedido-feito { background: var(--primaria-clara); color: var(--primaria); }
   .st-entregue { background: var(--verde-claro); color: var(--verde); }
 
+  /* ---------- Expedição ---------- */
+  .cartao-entrega { border-left: 4px solid var(--primaria); }
+  .cartao-entrega h3 { text-transform: capitalize; }
+  .lista-itens-entrega { list-style: none; padding: 0; margin: 12px 0; display: grid; gap: 6px; }
+  .lista-itens-entrega li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 6px 0; border-bottom: 1px solid var(--cinza-claro); }
+  .lista-itens-entrega li:last-child { border-bottom: 0; }
+  .lista-itens-entrega input { width: 18px; height: 18px; }
+  .st-programada, .st-em-separacao { background: var(--primaria-clara); color: var(--primaria); }
+  .st-saiu-para-entrega { background: var(--amarelo-claro); color: var(--amarelo); }
+  .st-entregue-com-divergencia { background: var(--vermelho-claro); color: var(--vermelho); }
+  .st-cancelada { background: var(--cinza-claro); color: #4a5568; }
+
   /* ---------- Painel do Gestor ---------- */
   .regra-aprovacao { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px; margin: 12px 0; }
   .regra-aprovacao .campo { min-width: 200px; }
@@ -486,6 +498,7 @@
     if (partes[0] === 'obra' && partes[2] === 'contrato') return telaContrato(partes[1]);
     if (partes[0] === 'obra' && partes[2] === 'engenharia') return telaEngenharia(partes[1]);
     if (partes[0] === 'obra' && partes[2] === 'compras') return telaCompras(partes[1]);
+    if (partes[0] === 'obra' && partes[2] === 'expedicao') return telaExpedicao(partes[1]);
     if (partes[0] === 'obra' && partes[2] === 'gestor') return telaGestor(partes[1]);
     if (partes[0] === 'obra' && partes[2] === 'etapa') return telaEtapa(partes[1], partes[3]);
     if (partes[0] === 'obra') return telaObra(partes[1]);
@@ -1087,6 +1100,7 @@
     if (etapa.Setor === 'Contrato') return irPara('#/obra/' + idObra + '/contrato');
     if (etapa.Setor === 'Engenharia') return irPara('#/obra/' + idObra + '/engenharia');
     if (etapa.Setor === 'Compras') return irPara('#/obra/' + idObra + '/compras');
+    if (etapa.Setor === 'Expedição') return irPara('#/obra/' + idObra + '/expedicao');
     if (etapa.Setor === 'Gestor') return irPara('#/obra/' + idObra + '/gestor');
     irPara('#/obra/' + idObra + '/etapa/' + idEtapa);
   }
@@ -2249,11 +2263,7 @@
           </div>
           <div class="acoes"><button class="botao" onclick="salvarNotaFiscal('${p.ID_Pedido}')">Salvar nota fiscal</button></div>
         </div>
-        <div class="form-inline">
-          <div class="campos"><div class="campo"><label for="ent-data">Data da entrega</label><input id="ent-data" type="date" value="${hojeISO()}"></div></div>
-          <p class="suave pequeno">Por enquanto Compras registra a entrega. Depois, quem confirma é o Fiscal ou a Expedição, no canteiro.</p>
-          <div class="acoes"><button class="botao sucesso" onclick="registrarEntrega('${p.ID_Pedido}')">Marcar como entregue</button></div>
-        </div></div>`;
+        <p class="suave pequeno">A entrega deste pedido é programada pela Expedição e confirmada na obra.</p></div>`;
     }
     return `<div class="painel-material">${dados}</div>`;
   }
@@ -2368,10 +2378,6 @@
       await chamar('anexarNotaFiscal', idPedido, document.getElementById('nf-num').value, arquivo, auth());
       await recarregarCompras('Nota fiscal salva!');
     } catch (erro) { mostrarErro(erro); travarBotoes(false); }
-  }
-
-  function registrarEntrega(idPedido) {
-    acaoCompras('marcarEntregue', [idPedido, document.getElementById('ent-data').value], 'Entrega registrada!');
   }
 
   /* ---------- Pedidos ---------- */
@@ -2555,6 +2561,257 @@
       mostrarMensagem(aprovar ? 'Aprovado!' : 'Recusado.');
       telaGestor(estado.gestor.obra.ID_Obra);
     } catch (erro) { mostrarErro(erro); travarBotoes(false); }
+  }
+
+  /* =========================================================
+   * TELA 11 – Setor Expedição
+   * Itens para programar, agenda de entregas (com romaneio)
+   * e confirmação na obra
+   * ========================================================= */
+  async function telaExpedicao(idObra) {
+    carregando('Abrindo Expedição…');
+    try {
+      estado.exp = await chamar('abrirExpedicao', idObra, auth());
+      estado.expSelecionados = [];
+      estado.expProgramando = false;
+      estado.expConfirmando = null;
+      desenharExpedicao();
+    } catch (erro) { mostrarErro(erro); irPara('#/obra/' + idObra); }
+  }
+
+  async function recarregarExpedicao(mensagem) {
+    if (mensagem) mostrarMensagem(mensagem);
+    estado.exp = await chamar('abrirExpedicao', estado.exp.obra.ID_Obra, auth());
+    estado.expSelecionados = [];
+    estado.expProgramando = false;
+    estado.expConfirmando = null;
+    desenharExpedicao();
+  }
+
+  function entregaAtiva(e) { return estado.exp.passos.includes(e.Situacao); }
+
+  function diaSemana(iso) {
+    return ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'][new Date(iso + 'T12:00:00').getDay()];
+  }
+
+  function desenharExpedicao() {
+    const { obra, aProgramar, entregas, podeEditar, podeConfirmar } = estado.exp;
+    const validas = entregas.filter(e => e.Situacao !== 'Cancelada');
+    const ativas = validas.filter(entregaAtiva);
+    const feitas = validas.filter(e => !entregaAtiva(e));
+
+    tela(`
+      <a class="link-voltar" onclick="irPara('#/obra/${obra.ID_Obra}')">← Voltar para a obra ${esc(obra.Codigo)}</a>
+      <div class="cabecalho-obra">
+        <div>
+          <div class="codigo">${esc(obra.Codigo)} · EXPEDIÇÃO</div>
+          <h1>${esc(obra.Cliente)}</h1>
+          <div class="suave">Entrega em: ${esc(obra.Endereco) || '—'}</div>
+        </div>
+        <div class="cartao resumo-andamento">
+          <div class="suave">Entregas concluídas</div>
+          <div class="numero">${feitas.length} de ${validas.length}</div>
+          <div class="suave pequeno">${aProgramar.length} iten(s) a programar</div>
+        </div>
+      </div>
+      ${!podeEditar && !podeConfirmar ? `<div class="aviso info">Você está vendo a Expedição apenas para consulta.</div>` : ''}
+      ${!podeEditar && podeConfirmar ? `<div class="aviso info">Você pode confirmar o recebimento das entregas na obra.</div>` : ''}
+
+      ${expItensParaProgramar()}
+
+      <h2 style="margin-top:8px">Agenda de entregas</h2>
+      ${ativas.length ? ativas.map(cartaoEntrega).join('') : '<div class="cartao secao"><p class="suave">Nenhuma entrega programada.</p></div>'}
+
+      ${feitas.length ? `<div class="cartao secao tabela-rolavel">
+        <h2>Entregas concluídas</h2>
+        <table class="tabela"><thead><tr><th>Entrega</th><th>Data</th><th>Itens</th><th>Situação</th><th>Confirmação</th></tr></thead>
+        <tbody>${feitas.slice().reverse().map(e => `<tr>
+          <td class="num"><strong>${esc(e.Numero)}</strong><div class="suave pequeno">${esc(e.Transporte)}</div></td>
+          <td class="num">${dataBR(e.Data)}</td>
+          <td>${e.itens.map(i => `${i.Recebido === false ? '<s>' : ''}${esc(i.Material)}${i.Recebido === false ? '</s>' : ''}`).join(', ')}</td>
+          <td>${etiqueta(e.Situacao)}${e.Divergencia ? `<div class="pequeno texto-erro">${esc(e.Divergencia)}</div>` : ''}</td>
+          <td class="pequeno">${e.ConfirmadoPor ? esc(e.ConfirmadoPor) + '<br>' + dataBR(e.ConfirmadoEm) : '—'} ${linkArquivo(e.FotoConfirmacao, 'Foto')}</td>
+        </tr>`).join('')}</tbody></table>
+      </div>` : ''}
+    `);
+  }
+
+  /* ---------- Itens comprados que ainda não têm entrega ---------- */
+  function expItensParaProgramar() {
+    const { aProgramar, podeEditar, hoje, transportes, periodos } = estado.exp;
+    if (!aProgramar.length) return `<div class="cartao secao"><h2>Itens para programar</h2>
+      <p class="suave">Nenhum item esperando entrega. Os pedidos feitos em Compras aparecem aqui.</p></div>`;
+    const sel = estado.expSelecionados;
+    const linhas = aProgramar.map(p => {
+      const urgente = p.DataNecessaria && p.DataNecessaria <= somarDias(hoje, 7);
+      return `<tr>
+        ${podeEditar ? `<td><input type="checkbox" ${sel.includes(p.ID_Pedido) ? 'checked' : ''} onchange="marcarItemEntrega('${p.ID_Pedido}', this.checked)"></td>` : ''}
+        <td><strong>${esc(p.Material)}</strong><div class="suave pequeno">${esc(p.NumeroPedido)} · ${esc(p.Fornecedor)}</div></td>
+        <td class="num">${Number(p.Quantidade).toLocaleString('pt-BR')} ${esc(p.Unidade)}</td>
+        <td>${esc(p.Etapa)}</td>
+        <td class="num">${dataBR(p.PrevisaoEntrega)}</td>
+        <td class="num ${urgente ? 'texto-erro' : ''}">${dataBR(p.DataNecessaria)}</td>
+      </tr>`;
+    }).join('');
+    const form = estado.expProgramando ? `<div class="form-inline">
+      <strong>Nova entrega com ${sel.length} iten(s)</strong>
+      <div class="campos" style="margin-top:8px">
+        <div class="campo"><label for="en-data">Data</label><input id="en-data" type="date" value="${somarDias(hoje, 1)}"></div>
+        <div class="campo"><label for="en-periodo">Período</label><select id="en-periodo">${periodos.map(x => `<option>${x}</option>`).join('')}</select></div>
+        <div class="campo"><label for="en-transp">Transporte</label><select id="en-transp" onchange="ajustarCamposTransporte()">${transportes.map(x => `<option>${x}</option>`).join('')}</select></div>
+        <div class="campo so-frota"><label for="en-veiculo">Veículo</label><input id="en-veiculo" placeholder="Ex.: Caminhão VW (ABC-1D23)"></div>
+        <div class="campo so-frota"><label for="en-motorista">Motorista</label><input id="en-motorista"></div>
+        <div class="campo so-transportadora" hidden><label for="en-transportadora">Transportadora</label><input id="en-transportadora"></div>
+        <div class="campo largo"><label for="en-obs">Observações</label><input id="en-obs" placeholder="Ex.: descarregar na garagem"></div>
+      </div>
+      <div class="acoes"><button class="botao" onclick="estado.expProgramando=false; desenharExpedicao()">Cancelar</button>
+        <button class="botao primario" onclick="salvarEntrega()">Programar entrega</button></div>
+    </div>` : '';
+    return `<div class="cartao secao tabela-rolavel">
+      <div class="cabecalho-obra" style="margin-bottom:8px"><div><h2>Itens para programar (${aProgramar.length})</h2>
+        <div class="suave pequeno">Pedidos feitos em Compras que ainda não têm entrega marcada.</div></div>
+        ${podeEditar && !estado.expProgramando ? `<button class="botao primario" ${sel.length ? '' : 'disabled'} onclick="estado.expProgramando=true; desenharExpedicao()">Programar entrega${sel.length ? ' com ' + sel.length + ' iten(s)' : ''}</button>` : ''}</div>
+      ${form}
+      <table class="tabela"><thead><tr>${podeEditar ? `<th><input type="checkbox" title="Marcar todos" ${sel.length === aProgramar.length ? 'checked' : ''} onchange="marcarTodosEntrega(this.checked)"></th>` : ''}
+        <th>Material</th><th>Quantidade</th><th>Etapa</th><th>Fornecedor entrega</th><th>Precisa chegar</th></tr></thead>
+      <tbody>${linhas}</tbody></table>
+    </div>`;
+  }
+
+  function marcarItemEntrega(id, marcado) {
+    const sel = estado.expSelecionados;
+    if (marcado && !sel.includes(id)) sel.push(id);
+    if (!marcado) estado.expSelecionados = sel.filter(x => x !== id);
+    desenharExpedicao();
+  }
+
+  function marcarTodosEntrega(marcado) {
+    estado.expSelecionados = marcado ? estado.exp.aProgramar.map(p => p.ID_Pedido) : [];
+    desenharExpedicao();
+  }
+
+  function ajustarCamposTransporte() {
+    const t = document.getElementById('en-transp').value;
+    document.querySelectorAll('.so-frota').forEach(el => { el.hidden = t !== 'Frota própria'; });
+    document.querySelectorAll('.so-transportadora').forEach(el => { el.hidden = t !== 'Transportadora'; });
+  }
+
+  async function salvarEntrega() {
+    const v = id => document.getElementById(id).value;
+    if (!v('en-data')) return mostrarMensagem('Informe a data.', 'erro');
+    travarBotoes(true);
+    try {
+      const numero = await chamar('programarEntrega', estado.exp.obra.ID_Obra, {
+        Data: v('en-data'), Periodo: v('en-periodo'), Transporte: v('en-transp'), Veiculo: v('en-veiculo'),
+        Motorista: v('en-motorista'), Transportadora: v('en-transportadora'), Observacoes: v('en-obs')
+      }, estado.expSelecionados, auth());
+      await recarregarExpedicao(`Entrega ${numero} programada!`);
+    } catch (erro) { mostrarErro(erro); travarBotoes(false); }
+  }
+
+  /* ---------- Cartão de cada entrega da agenda ---------- */
+  function cartaoEntrega(e) {
+    const { passos, podeEditar, podeConfirmar, hoje } = estado.exp;
+    const atual = passos.indexOf(e.Situacao);
+    const barra = passos.concat(['Entregue']).map((nome, i) => {
+      const cls = i < atual ? 'feito' : i === atual ? 'atual' : '';
+      const linha = i < passos.length ? `<div class="linha-passo ${i < atual ? 'feito' : ''}"></div>` : '';
+      return `<div class="passo ${cls}"><span class="bola">${i < atual ? '✓' : i + 1}</span>${nome}</div>${linha}`;
+    }).join('');
+    const transporte = e.Transporte === 'Frota própria' ? `Frota própria${e.Veiculo ? ' · ' + esc(e.Veiculo) : ''}${e.Motorista ? ' · ' + esc(e.Motorista) : ''}`
+      : e.Transporte === 'Transportadora' ? `Transportadora${e.Transportadora ? ' · ' + esc(e.Transportadora) : ''}` : esc(e.Transporte);
+    const atrasada = e.Data < hoje;
+    const confirmando = estado.expConfirmando === e.ID_Entrega;
+    const proximo = passos[atual + 1];
+
+    return `<div class="cartao secao cartao-entrega">
+      <div class="cabecalho-obra" style="margin-bottom:6px">
+        <div><div class="codigo">${esc(e.Numero)}</div>
+          <h3>${diaSemana(e.Data)}, ${dataBR(e.Data)} · ${esc(e.Periodo)}</h3>
+          <div class="suave pequeno">${transporte}${e.Observacoes ? ' · ' + esc(e.Observacoes) : ''}</div></div>
+        ${atrasada ? '<span class="etiqueta st-atrasada">Data passou</span>' : etiqueta(e.Situacao)}
+      </div>
+      <div class="passos">${barra}</div>
+      <ul class="lista-itens-entrega">${e.itens.map(i => `<li>
+        ${confirmando ? `<input type="checkbox" class="chk-recebido" value="${i.ID_Item}" checked>` : ''}
+        <strong>${esc(i.Material)}</strong> — ${Number(i.Quantidade).toLocaleString('pt-BR')} ${esc(i.Unidade)}
+        <span class="suave pequeno">(${esc(i.NumeroPedido)} · ${esc(i.Fornecedor)})</span></li>`).join('')}</ul>
+      ${confirmando ? `<div class="form-inline">
+        <strong>Confirmar recebimento na obra</strong>
+        <p class="suave pequeno" style="margin:4px 0 8px">Desmarque o que não chegou. Esses itens voltam para "Itens para programar".</p>
+        <div class="campos">
+          <div class="campo largo"><label for="cf-div">Divergência (obrigatória se algo não chegou ou veio errado)</label>
+            <textarea id="cf-div" placeholder="Ex.: vieram 150 sacos em vez de 180"></textarea></div>
+          <div class="campo"><label for="cf-foto">Foto da entrega</label><input id="cf-foto" type="file" accept="image/*" capture="environment"></div>
+        </div>
+        <div class="acoes"><button class="botao" onclick="estado.expConfirmando=null; desenharExpedicao()">Voltar</button>
+          <button class="botao sucesso" onclick="confirmarEntregaTela('${e.ID_Entrega}')">Confirmar recebimento</button></div>
+      </div>` : `<div class="acoes">
+        ${podeEditar ? `<button class="botao" onclick="cancelarEntregaTela('${e.ID_Entrega}')">Cancelar entrega</button>` : ''}
+        <button class="botao" onclick="imprimirRomaneio('${e.ID_Entrega}')">Romaneio</button>
+        ${podeEditar && proximo ? `<button class="botao primario" onclick="avancarEntregaTela('${e.ID_Entrega}')">Marcar "${proximo}"</button>` : ''}
+        ${podeConfirmar ? `<button class="botao sucesso" onclick="estado.expConfirmando='${e.ID_Entrega}'; desenharExpedicao()">Confirmar recebimento</button>` : ''}
+      </div>`}
+    </div>`;
+  }
+
+  async function acaoExpedicao(funcao, args, mensagem) {
+    travarBotoes(true);
+    try {
+      const r = await chamar(funcao, ...args, auth());
+      await recarregarExpedicao(typeof mensagem === 'function' ? mensagem(r) : mensagem);
+    } catch (erro) { mostrarErro(erro); travarBotoes(false); }
+  }
+
+  function avancarEntregaTela(id) { acaoExpedicao('avancarEntrega', [id], r => `Entrega marcada como "${r}".`); }
+
+  function cancelarEntregaTela(id) {
+    if (!confirm('Cancelar esta entrega? Os itens voltam para "Itens para programar".')) return;
+    acaoExpedicao('cancelarEntrega', [id], 'Entrega cancelada.');
+  }
+
+  async function confirmarEntregaTela(id) {
+    const recebidos = Array.from(document.querySelectorAll('.chk-recebido')).filter(c => c.checked).map(c => c.value);
+    const divergencia = document.getElementById('cf-div').value.trim();
+    const total = document.querySelectorAll('.chk-recebido').length;
+    if (recebidos.length < total && !divergencia) return mostrarMensagem('Explique na divergência o que não chegou.', 'erro');
+    travarBotoes(true);
+    try {
+      const campo = document.getElementById('cf-foto');
+      const foto = campo.files[0] ? await lerArquivo(campo.files[0]) : null;
+      const r = await chamar('confirmarEntrega', id, recebidos, divergencia, foto, auth());
+      await recarregarExpedicao(r === 'Entregue' ? 'Recebimento confirmado!' : 'Recebimento confirmado com divergência.');
+    } catch (erro) { mostrarErro(erro); travarBotoes(false); }
+  }
+
+  // Romaneio: abre uma página pronta para imprimir ou salvar em PDF
+  function imprimirRomaneio(id) {
+    const { obra, entregas } = estado.exp;
+    const e = entregas.find(x => x.ID_Entrega === id);
+    const linhas = e.itens.map((i, n) => `<tr><td>${n + 1}</td><td>${esc(i.Material)}</td>
+      <td style="text-align:right">${Number(i.Quantidade).toLocaleString('pt-BR')}</td><td>${esc(i.Unidade)}</td>
+      <td>${esc(i.NumeroPedido)}</td><td>${esc(i.Fornecedor)}</td><td style="width:90px"></td></tr>`).join('');
+    const transporte = [e.Transporte, e.Veiculo, e.Motorista, e.Transportadora].filter(Boolean).map(esc).join(' · ');
+    const janela = window.open('', '_blank');
+    if (!janela) return mostrarMensagem('O navegador bloqueou a janela do romaneio. Permita pop-ups para este site.', 'erro');
+    janela.document.write(`<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>Romaneio ${esc(e.Numero)}</title>
+      <style>body{font-family:Arial,sans-serif;margin:32px;color:#111;font-size:13px}h1{font-size:20px;margin:0}
+      .topo{display:flex;justify-content:space-between;border-bottom:2px solid #111;padding-bottom:10px;margin-bottom:14px}
+      table{width:100%;border-collapse:collapse;margin-top:12px}th,td{border:1px solid #999;padding:6px;text-align:left}
+      th{background:#eee}.dados{display:grid;grid-template-columns:1fr 1fr;gap:4px 24px}.ass{display:flex;gap:40px;margin-top:50px}
+      .ass div{flex:1;border-top:1px solid #111;padding-top:4px;text-align:center}@media print{button{display:none}}</style></head><body>
+      <div class="topo"><div><h1>Romaneio de entrega</h1><div>Gestão de Obras</div></div>
+        <div style="text-align:right"><strong>${esc(e.Numero)}</strong><br>${dataBR(e.Data)} · ${esc(e.Periodo)}</div></div>
+      <div class="dados"><div><strong>Obra:</strong> ${esc(obra.Codigo)} – ${esc(obra.Cliente)}</div>
+        <div><strong>Transporte:</strong> ${transporte}</div>
+        <div><strong>Endereço:</strong> ${esc(obra.Endereco)}</div>
+        <div><strong>Observações:</strong> ${esc(e.Observacoes) || '—'}</div></div>
+      <table><thead><tr><th>#</th><th>Material</th><th>Qtd.</th><th>Unid.</th><th>Pedido</th><th>Fornecedor</th><th>Conferido</th></tr></thead>
+      <tbody>${linhas}</tbody></table>
+      <div class="ass"><div>Expedição / motorista</div><div>Recebido na obra por (nome e data)</div></div>
+      <p><button onclick="window.print()">Imprimir ou salvar em PDF</button></p>
+      </body></html>`);
+    janela.document.close();
   }
 
   iniciar();
