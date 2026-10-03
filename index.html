@@ -506,7 +506,9 @@
       // Quem leva arquivo pode demorar mais no servidor (salvar no Drive)
       const comArquivo = args.some(a => a && (a.base64 || a.envio));
       const envio = idDoEnvio(args);
-      return pedirAoServidor(funcao, args, leitura ? 3 : 1, comArquivo ? 330000 : 45000)
+      const pesado = funcao === 'enviarParteArquivo' || funcao === 'baixarArquivo'; // levam um pedaço de arquivo
+      const tempo = comArquivo ? 330000 : pesado ? 120000 : leitura ? 25000 : 45000;
+      return pedirAoServidor(funcao, args, leitura ? TENTATIVAS_LEITURA : 1, tempo)
         .catch(erro => envio && erro.semResposta ? esperarResposta(envio, erro) : Promise.reject(erro))
         .catch(falhou);
     }
@@ -516,6 +518,16 @@
         .withFailureHandler(reject)
         [funcao](...args);
     }).catch(falhou);
+  }
+
+  // Leituras: quando o Google falha por um instante (comum), tenta de novo até 4 vezes
+  const TENTATIVAS_LEITURA = 4;
+
+  function avisarNovaTentativa(proxima) {
+    const aviso = document.querySelector('#tela .aviso-demora');
+    if (!aviso) return;
+    aviso.hidden = false;
+    aviso.textContent = `O servidor do Google está lento agora. Tentando de novo (${proxima} de ${TENTATIVAS_LEITURA})…`;
   }
 
   // Arquivo grande mandado em pedaços: a "senha" do envio
@@ -572,11 +584,13 @@
       .finally(() => clearTimeout(limite))
       .then(d => { if (!d.ok) throw new Error(d.erro); return d.r; })
       .catch(erro => {
-        if (falhaDeRede && tentativas > 1) {
+        const tempoEsgotado = erro.name === 'AbortError' || /demorou demais/.test(erro.message);
+        if ((falhaDeRede || tempoEsgotado) && tentativas > 1) {
+          avisarNovaTentativa(TENTATIVAS_LEITURA - tentativas + 2);
           return new Promise(r => setTimeout(r, 2000)).then(() => pedirAoServidor(funcao, args, tentativas - 1, tempoLimite));
         }
         // Sem resposta do servidor (rede, página de erro ou tempo esgotado): o pedido pode ter dado certo lá
-        if (falhaDeRede || erro.name === 'AbortError' || /demorou demais/.test(erro.message)) erro.semResposta = true;
+        if (falhaDeRede || tempoEsgotado) erro.semResposta = true;
         throw erro;
       });
   }
