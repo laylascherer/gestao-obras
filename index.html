@@ -527,7 +527,8 @@
     if (window.API_URL) {
       // Leituras (abrir telas, listar) tentam de novo sozinhas se o Google falhar por um instante.
       // Gravações não repetem, para não salvar nada em dobro.
-      const leitura = funcao === 'iniciarSessao' || funcao.startsWith('abrir') || funcao.startsWith('listar') ||
+      // (entrar também pode repetir: cada tentativa só cria uma sessão nova)
+      const leitura = funcao === 'iniciarSessao' || funcao === 'entrar' || funcao.startsWith('abrir') || funcao.startsWith('listar') ||
         funcao === 'enviarParteArquivo' || funcao === 'baixarArquivo';
       // Quem leva arquivo pode demorar mais no servidor (salvar no Drive)
       const comArquivo = args.some(a => a && (a.base64 || a.envio));
@@ -823,6 +824,7 @@
     estado.sessao = r.usuario;
     estado.simulaveis = r.simulaveis || [];
     estado.pendentes = r.pendentes || 0;
+    estado.demonstracao = !!r.demonstracao;
     const simulado = estado.simulaveis.find(u => u.Email === estado.auth.verComo);
     if (!simulado) { estado.auth.verComo = ''; gravarLocal('verComo', ''); }
     estado.usuario = simulado || estado.sessao;
@@ -838,10 +840,10 @@
     const simulando = estado.usuario !== s;
     area.innerHTML = `
       ${admin ? `
-        <button class="botao-topo" onclick="irPara('#/usuarios')">Usuários${estado.pendentes ? ` <span class="contador">${estado.pendentes}</span>` : ''}</button>
+        ${estado.demonstracao ? '' : `<button class="botao-topo" onclick="irPara('#/usuarios')">Usuários${estado.pendentes ? ` <span class="contador">${estado.pendentes}</span>` : ''}</button>`}
         <label class="simular">Simular:
           <select onchange="simular(this.value)">
-            <option value="">Eu mesma(o)</option>
+            <option value="">${estado.demonstracao ? 'Administrador (tudo)' : 'Eu mesma(o)'}</option>
             ${estado.simulaveis.map(u => `<option value="${esc(u.Email)}" ${u === estado.usuario ? 'selected' : ''}>${esc(u.Nome)} — ${esc(u.Setor)}</option>`).join('')}
           </select>
         </label>` : ''}
@@ -877,8 +879,8 @@
       <div class="tela-login cartao">
         <h1>Entrar</h1>
         <form id="form-entrar" onsubmit="event.preventDefault(); fazerLogin()">
-          <div class="campo"><label for="login-email">E-mail</label>
-            <input id="login-email" type="email" autocomplete="email" required value="${esc(estado.loginEmail || lerLocal('ultimoEmail'))}"></div>
+          <div class="campo"><label for="login-email">E-mail ou usuário</label>
+            <input id="login-email" type="text" autocomplete="username" autocapitalize="none" spellcheck="false" required value="${esc(estado.loginEmail || lerLocal('ultimoEmail'))}"></div>
           <div class="campo"><label for="login-senha">Senha</label>
             <div class="campo-senha"><input id="login-senha" type="password" autocomplete="current-password" required><button type="button" class="ver-senha" onclick="alternarSenha('login-senha', this)" aria-label="Mostrar senha" title="Mostrar senha">${ICONE_OLHO}</button></div></div>
           <button class="botao primario largo" id="btn-entrar">Entrar</button>
