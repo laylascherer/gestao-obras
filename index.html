@@ -600,8 +600,8 @@
         try { return JSON.parse(texto); } catch (e) { /* o Google devolveu uma página de erro */ }
         falhaDeRede = true;
         const titulo = (texto.match(/<title>([^<]*)<\/title>/i) || [])[1] || '';
-        if (/autoriza|authoriz|permiss/i.test(texto)) {
-          falhaDeRede = false;
+        // Página de autorização do Google (texto específico). Mesmo assim tenta de novo antes de mostrar.
+        if (/Autoriza[çc][ãa]o necess[áa]ria|Authorization (is )?required|needs your permission/i.test(texto)) {
           throw new Error('O Google bloqueou esta ação porque falta autorizar as permissões do sistema. ' +
             'A administradora precisa abrir a planilha no computador e clicar em Gestão de Obras → Autorizar permissões.');
         }
@@ -989,7 +989,7 @@
       if (!estado.filtroUsuarios) estado.filtroUsuarios = estado.pendentes ? 'Pendente' : 'Ativo';
       desenharTopo();
       desenharUsuarios();
-    } catch (erro) { mostrarErro(erro); }
+    } catch (erro) { mostrarErro(erro); irPara('#/'); }
   }
 
   function desenharUsuarios() {
